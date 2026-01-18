@@ -3,9 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Menu, X, ShoppingCart, BookOpen, Home, Store, 
-  Info, Mail, ChevronDown, Music2, MessageSquare
-} from 'lucide-react';
+        Menu, X, ShoppingCart, BookOpen, Home, Store, 
+        Info, Mail, ChevronDown, Music2, MessageSquare, Bot
+      } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
 import CartDrawer from '@/components/store/CartDrawer';
