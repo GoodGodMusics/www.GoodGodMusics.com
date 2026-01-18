@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,35 @@ export default function Admin() {
     enabled: user?.role === 'admin'
   });
 
+  const { data: homepageSettings } = useQuery({
+    queryKey: ['homepageSettings'],
+    queryFn: async () => {
+      const settings = await base44.entities.HomepageSettings.list('-created_date', 1);
+      return settings[0];
+    },
+    enabled: user?.role === 'admin'
+  });
+
+  const [themeData, setThemeData] = useState({
+    theme_song_url: '',
+    theme_song_title: '',
+    theme_song_artist: '',
+    autoplay: false,
+    is_active: true
+  });
+
+  useEffect(() => {
+    if (homepageSettings) {
+      setThemeData({
+        theme_song_url: homepageSettings.theme_song_url || '',
+        theme_song_title: homepageSettings.theme_song_title || '',
+        theme_song_artist: homepageSettings.theme_song_artist || '',
+        autoplay: homepageSettings.autoplay || false,
+        is_active: homepageSettings.is_active !== false
+      });
+    }
+  }, [homepageSettings]);
+
   const updateChapterMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BibleChapter.update(id, data),
     onSuccess: () => {
@@ -71,6 +100,19 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminComments'] });
       queryClient.invalidateQueries({ queryKey: ['comments'] });
+    }
+  });
+
+  const updateThemeSongMutation = useMutation({
+    mutationFn: async (data) => {
+      if (homepageSettings?.id) {
+        return base44.entities.HomepageSettings.update(homepageSettings.id, data);
+      } else {
+        return base44.entities.HomepageSettings.create(data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['homepageSettings'] });
     }
   });
 
@@ -132,6 +174,10 @@ export default function Admin() {
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               Comments ({pendingComments.length} pending)
+            </TabsTrigger>
+            <TabsTrigger value="homepage" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Homepage Theme Song
             </TabsTrigger>
           </TabsList>
 
@@ -280,6 +326,99 @@ export default function Admin() {
                         )}
                       </motion.div>
                     ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Homepage Theme Song Tab */}
+          <TabsContent value="homepage">
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-stone-800 mb-4">Homepage Theme Song</h2>
+              <p className="text-stone-600 mb-6">
+                Set a theme song that plays on the homepage to promote new releases and create engagement.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-2 block">
+                    YouTube URL <span className="text-red-600">*</span>
+                  </label>
+                  <Input
+                    value={themeData.theme_song_url}
+                    onChange={(e) => setThemeData({...themeData, theme_song_url: e.target.value})}
+                    placeholder="https://youtube.com/watch?v=..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-stone-700 mb-2 block">
+                      Song Title
+                    </label>
+                    <Input
+                      value={themeData.theme_song_title}
+                      onChange={(e) => setThemeData({...themeData, theme_song_title: e.target.value})}
+                      placeholder="Song name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-stone-700 mb-2 block">
+                      Artist
+                    </label>
+                    <Input
+                      value={themeData.theme_song_artist}
+                      onChange={(e) => setThemeData({...themeData, theme_song_artist: e.target.value})}
+                      placeholder="Artist name"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={themeData.autoplay}
+                      onChange={(e) => setThemeData({...themeData, autoplay: e.target.checked})}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="text-sm text-stone-700">Auto-play on page load</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={themeData.is_active}
+                      onChange={(e) => setThemeData({...themeData, is_active: e.target.checked})}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="text-sm text-stone-700">Active (show on homepage)</span>
+                  </label>
+                </div>
+
+                <Button
+                  onClick={() => updateThemeSongMutation.mutate(themeData)}
+                  disabled={updateThemeSongMutation.isPending || !themeData.theme_song_url}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  {updateThemeSongMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Theme Song
+                    </>
+                  )}
+                </Button>
+
+                {updateThemeSongMutation.isSuccess && (
+                  <div className="flex items-center gap-2 text-green-600 text-sm">
+                    <Check className="w-4 h-4" />
+                    Theme song updated successfully!
                   </div>
                 )}
               </div>

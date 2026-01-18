@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import HeroSection from '@/components/ui-custom/HeroSection';
 import CommentSection from '@/components/comments/CommentSection';
+import ThemeSongPlayer from '@/components/homepage/ThemeSongPlayer';
 
 export default function Home() {
   // Fetch featured chapters with music
@@ -23,6 +24,15 @@ export default function Home() {
   const { data: featuredProducts = [] } = useQuery({
     queryKey: ['featuredProducts'],
     queryFn: () => base44.entities.Product.filter({ featured: true }, '-created_date', 4)
+  });
+
+  // Fetch homepage theme song settings
+  const { data: homepageSettings } = useQuery({
+    queryKey: ['homepageSettings'],
+    queryFn: async () => {
+      const settings = await base44.entities.HomepageSettings.list('-created_date', 1);
+      return settings[0];
+    }
   });
 
   const features = [
@@ -66,6 +76,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Theme Song Player */}
+      {homepageSettings?.is_active && homepageSettings?.theme_song_url && (
+        <ThemeSongPlayer
+          songUrl={homepageSettings.theme_song_url}
+          title={homepageSettings.theme_song_title}
+          artist={homepageSettings.theme_song_artist}
+          autoplay={homepageSettings.autoplay}
+        />
+      )}
+
       {/* Hero Section */}
       <HeroSection />
 
