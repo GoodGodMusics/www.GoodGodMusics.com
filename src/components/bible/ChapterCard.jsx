@@ -76,7 +76,10 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
         {/* Main content */}
         <div 
           className="p-6 cursor-pointer"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+            if (!isExpanded) trackInteraction('viewed');
+          }}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">

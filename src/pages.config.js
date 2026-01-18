@@ -6,6 +6,7 @@ import Contact from './pages/Contact';
 import Home from './pages/Home';
 import Store from './pages/Store';
 import Discover from './pages/Discover';
+import Music from './pages/Music';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "Home": Home,
     "Store": Store,
     "Discover": Discover,
+    "Music": Music,
 }
 
 export const pagesConfig = {
