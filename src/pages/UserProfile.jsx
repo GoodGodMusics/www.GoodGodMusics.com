@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Separator } from '@/components/ui/separator';
 import CharityStore from '@/components/quiz/CharityStore';
+import PlaylistManager from '@/components/playlists/PlaylistManager';
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
@@ -202,7 +203,11 @@ export default function UserProfile() {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="quizzes" className="w-full">
-            <TabsList className="grid w-full grid-cols-7 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+              <TabsTrigger value="playlists" className="rounded-lg">
+                <Music2 className="w-4 h-4 mr-2" />
+                Playlists
+              </TabsTrigger>
               <TabsTrigger value="quizzes" className="rounded-lg">
                 <Brain className="w-4 h-4 mr-2" />
                 Quizzes
@@ -232,6 +237,15 @@ export default function UserProfile() {
                 Settings
               </TabsTrigger>
             </TabsList>
+
+            {/* Playlists Tab */}
+            <TabsContent value="playlists">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
+                <CardContent className="p-6">
+                  <PlaylistManager userEmail={user?.email} />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Quizzes Tab */}
             <TabsContent value="quizzes">

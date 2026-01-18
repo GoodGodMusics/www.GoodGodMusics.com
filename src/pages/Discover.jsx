@@ -14,6 +14,7 @@ import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
 import ShareButton from '@/components/ui-custom/ShareButton';
 import ProducerSubmissionForm from '@/components/discovery/ProducerSubmissionForm';
 import ChristianMemeGallery from '@/components/discovery/ChristianMemeGallery';
+import DevotionalSubmissionForm from '@/components/devotionals/DevotionalSubmissionForm';
 
 export default function Discover() {
   const [userId, setUserId] = useState(null);
@@ -178,6 +179,11 @@ export default function Discover() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* User Devotional Submissions */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <DevotionalSubmissionForm />
       </section>
 
       {/* Christian Memes */}

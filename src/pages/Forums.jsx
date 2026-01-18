@@ -13,6 +13,8 @@ import { base44 } from '@/api/base44Client';
 import ForumAnalytics from '@/components/forums/ForumAnalytics';
 import TagFilter from '@/components/tags/TagFilter';
 import TagInput from '@/components/tags/TagInput';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function Forums() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -322,13 +324,21 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                     onChange={(e) => setNewPost({...newPost, title: e.target.value})}
                     required
                   />
-                  <Textarea
-                    placeholder="Share your thoughts, questions, or prayer requests..."
-                    value={newPost.content}
-                    onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                    rows={6}
-                    required
-                  />
+                  <div className="bg-white rounded-lg border border-stone-200">
+                    <ReactQuill
+                      theme="snow"
+                      value={newPost.content}
+                      onChange={(value) => setNewPost({...newPost, content: value})}
+                      placeholder="Share your thoughts, questions, or prayer requests..."
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline'],
+                          [{ list: 'ordered' }, { list: 'bullet' }],
+                          ['clean']
+                        ]
+                      }}
+                    />
+                  </div>
                   <div className="flex gap-4">
                     <Select value={newPost.category} onValueChange={(val) => setNewPost({...newPost, category: val})}>
                       <SelectTrigger className="flex-1">
@@ -407,16 +417,16 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1" onClick={() => setSelectedPost(post)}>
-                          <div className="flex items-center gap-2 mb-2">
-                            {post.is_pinned && <Pin className="w-4 h-4 text-amber-600" />}
-                            {post.is_locked && <Lock className="w-4 h-4 text-stone-400" />}
-                            {post.moderation_flag && <AlertTriangle className="w-4 h-4 text-yellow-600" title={post.moderation_flag} />}
-                            <Badge className={categoryColors[post.category]}>
-                              {post.category.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                          <h3 className="text-xl font-bold text-stone-800 mb-2">{post.title}</h3>
-                          <p className="text-stone-600 line-clamp-2">{post.content}</p>
+                        <div className="flex items-center gap-2 mb-2">
+                          {post.is_pinned && <Pin className="w-4 h-4 text-amber-600" />}
+                          {post.is_locked && <Lock className="w-4 h-4 text-stone-400" />}
+                          {post.moderation_flag && <AlertTriangle className="w-4 h-4 text-yellow-600" title={post.moderation_flag} />}
+                          <Badge className={categoryColors[post.category]}>
+                            {post.category.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        <h3 className="text-xl font-bold text-stone-800 mb-2">{post.title}</h3>
+                        <div className="text-stone-600 line-clamp-2" dangerouslySetInnerHTML={{ __html: post.content }} />
                         </div>
                         {currentUser && (
                           <Button
@@ -477,7 +487,7 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 bg-stone-50 rounded-lg">
-                    <p className="text-sm text-stone-700">{selectedPost.content}</p>
+                    <div className="text-sm text-stone-700 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: selectedPost.content }} />
                     <p className="text-xs text-stone-500 mt-2">
                       Posted by {selectedPost.author_name}
                     </p>
