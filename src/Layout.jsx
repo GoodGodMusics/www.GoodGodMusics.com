@@ -83,6 +83,7 @@ export default function Layout({ children, currentPageName }) {
   const navLinks = [
     { name: 'Home', page: 'Home', icon: Home },
     { name: 'Bible Timeline', page: 'BibleTimeline', icon: BookOpen },
+    { name: 'Discover', page: 'Discover', icon: Music2 },
     { name: 'Store', page: 'Store', icon: Store },
     { name: 'About', page: 'About', icon: Info },
     { name: 'Contact', page: 'Contact', icon: Mail },

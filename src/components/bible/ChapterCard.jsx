@@ -1,10 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Music2, ExternalLink, BookOpen, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { base44 } from '@/api/base44Client';
 
 export default function ChapterCard({ chapter, onSuggestSong }) {
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const user = await base44.auth.me();
+        setUserId(user.email);
+      } catch {
+        const sessionId = localStorage.getItem('sessionId') || Date.now().toString();
+        localStorage.setItem('sessionId', sessionId);
+        setUserId(sessionId);
+      }
+    };
+    getUserId();
+  }, []);
+
+  const trackInteraction = async (type) => {
+    if (!userId) return;
+    
+    try {
+      await base44.entities.UserInteraction.create({
+        user_email: userId,
+        interaction_type: type,
+        chapter_id: chapter.id,
+        chapter_reference: `${chapter.book} ${chapter.chapter_number}`,
+        song_title: chapter.song_title,
+        song_artist: chapter.song_artist,
+        youtube_link: chapter.youtube_link,
+        themes: [chapter.era]
+      });
+    } catch (error) {
+      console.error('Error tracking interaction:', error);
+    }
+  };
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -88,7 +123,10 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  trackInteraction('played');
+                }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >

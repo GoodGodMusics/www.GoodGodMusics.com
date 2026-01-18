@@ -1,21 +1,23 @@
 import About from './pages/About';
+import Admin from './pages/Admin';
 import BibleTimeline from './pages/BibleTimeline';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import Home from './pages/Home';
 import Store from './pages/Store';
-import Admin from './pages/Admin';
+import Discover from './pages/Discover';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
+    "Admin": Admin,
     "BibleTimeline": BibleTimeline,
     "Checkout": Checkout,
     "Contact": Contact,
     "Home": Home,
     "Store": Store,
-    "Admin": Admin,
+    "Discover": Discover,
 }
 
 export const pagesConfig = {

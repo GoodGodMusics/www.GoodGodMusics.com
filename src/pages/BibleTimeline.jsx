@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, BookOpen, Filter, Music2, Loader2, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,24 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import EraSection from '@/components/bible/EraSection';
 import SuggestSongModal from '@/components/bible/SuggestSongModal';
+import RecommendationEngine from '@/components/recommendations/RecommendationEngine';
 
 export default function BibleTimeline() {
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const user = await base44.auth.me();
+        setUserId(user.email);
+      } catch {
+        const sessionId = localStorage.getItem('sessionId') || Date.now().toString();
+        localStorage.setItem('sessionId', sessionId);
+        setUserId(sessionId);
+      }
+    };
+    getUserId();
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTestament, setSelectedTestament] = useState('all');
   const [filterHasMusic, setFilterHasMusic] = useState(false);
@@ -169,6 +185,11 @@ export default function BibleTimeline() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* AI Recommendations */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <RecommendationEngine userId={userId} />
       </section>
 
       {/* Content */}
