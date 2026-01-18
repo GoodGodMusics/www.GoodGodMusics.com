@@ -100,14 +100,27 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
           >
+            <Link to={createPageUrl('TheBook')}>
+              <Button 
+                size="lg"
+                className="group relative overflow-hidden bg-gradient-to-r from-stone-800 via-stone-700 to-stone-800 hover:from-stone-900 hover:via-stone-800 hover:to-stone-900 text-amber-100 px-8 py-6 text-lg rounded-full shadow-xl shadow-stone-900/30 transition-all duration-300 border-2 border-amber-700/30"
+              >
+                <span className="relative z-10 flex items-center gap-3">
+                  <BookOpen className="w-5 h-5" />
+                  Open The Book
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </Button>
+            </Link>
+            
             <Link to={createPageUrl('BibleTimeline')}>
               <Button 
                 size="lg"
                 className="group relative overflow-hidden bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 hover:from-amber-800 hover:via-amber-700 hover:to-amber-800 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-amber-900/20 transition-all duration-300"
               >
                 <span className="relative z-10 flex items-center gap-3">
-                  <BookOpen className="w-5 h-5" />
-                  Explore Chapters
+                  <Music2 className="w-5 h-5" />
+                  Find Music
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               </Button>
