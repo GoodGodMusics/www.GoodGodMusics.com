@@ -7,6 +7,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import RecommendationEngine from '@/components/recommendations/RecommendationEngine';
+import PersonalizedPlaylists from '@/components/discovery/PersonalizedPlaylists';
+import ThemeRadio from '@/components/discovery/ThemeRadio';
+import CharacterSubscription from '@/components/discovery/CharacterSubscription';
+import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
+import ShareButton from '@/components/ui-custom/ShareButton';
 
 export default function Discover() {
   const [userId, setUserId] = useState(null);
@@ -64,9 +69,28 @@ export default function Discover() {
         </div>
       </section>
 
+      {/* Character of the Week Subscription */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto -mt-8 relative z-10">
+        <CharacterSubscription />
+      </section>
+
       {/* AI Recommendations */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto -mt-8 relative z-10">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <RecommendationEngine userId={userId} />
+      </section>
+
+      {/* Personalized Playlists */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h2 className="text-3xl font-serif font-bold text-stone-800 mb-2">Your Playlists</h2>
+          <p className="text-stone-600">Generated from your listening history</p>
+        </div>
+        <PersonalizedPlaylists userId={userId} />
+      </section>
+
+      {/* Theme Radio */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <ThemeRadio />
       </section>
 
       {/* GoodGodMusics Releases */}
@@ -171,6 +195,21 @@ export default function Discover() {
                           ))}
                         </div>
                       )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <LikeDislikeButton song={release} size="sm" />
+                        <div className="ml-auto">
+                          <ShareButton
+                            title={`${release.title} - GoodGodMusics`}
+                            description={release.description || `${release.title} by ${release.artist}`}
+                            url={release.youtube_link || release.spotify_link || window.location.href}
+                            hashtags={release.biblical_themes?.slice(0, 2) || ['Worship']}
+                            variant="ghost"
+                            size="sm"
+                          />
+                        </div>
+                      </div>
 
                       {/* Links */}
                       <div className="flex gap-2">
