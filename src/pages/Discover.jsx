@@ -12,6 +12,8 @@ import ThemeRadio from '@/components/discovery/ThemeRadio';
 import CharacterSubscription from '@/components/discovery/CharacterSubscription';
 import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
 import ShareButton from '@/components/ui-custom/ShareButton';
+import ProducerSubmissionForm from '@/components/discovery/ProducerSubmissionForm';
+import ChristianMemeGallery from '@/components/discovery/ChristianMemeGallery';
 
 export default function Discover() {
   const [userId, setUserId] = useState(null);
@@ -34,6 +36,12 @@ export default function Discover() {
   const { data: releases = [], isLoading } = useQuery({
     queryKey: ['allReleases'],
     queryFn: () => base44.entities.MusicRelease.list('-release_date', 50)
+  });
+
+  // Get approved producer submissions
+  const { data: producerSubmissions = [] } = useQuery({
+    queryKey: ['approvedProducerSubmissions'],
+    queryFn: () => base44.entities.ProducerSubmission.filter({ status: 'approved' }, '-created_date', 30)
   });
 
   const featuredReleases = releases.filter(r => r.is_featured);
@@ -91,6 +99,90 @@ export default function Discover() {
       {/* Theme Radio */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <ThemeRadio />
+      </section>
+
+      {/* Producer Submissions */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h2 className="text-3xl font-serif font-bold text-stone-800 mb-2">Community Artists</h2>
+          <p className="text-stone-600">Divine music from independent religious producers</p>
+        </div>
+        
+        <div className="mb-12">
+          <ProducerSubmissionForm />
+        </div>
+
+        {producerSubmissions.length > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {producerSubmissions.map((submission, index) => (
+              <motion.div
+                key={submission.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-serif font-bold text-lg text-stone-800 mb-1">
+                        {submission.song_title}
+                      </h3>
+                      <p className="text-stone-600 text-sm">{submission.artist_name}</p>
+                    </div>
+                    <Badge className="bg-purple-100 text-purple-800">
+                      {submission.genre.replace('_', ' ')}
+                    </Badge>
+                  </div>
+
+                  {submission.description && (
+                    <p className="text-stone-600 text-sm mb-3 line-clamp-2">
+                      {submission.description}
+                    </p>
+                  )}
+
+                  {submission.biblical_inspiration && (
+                    <p className="text-xs text-purple-600 italic mb-4">
+                      Inspired by {submission.biblical_inspiration}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 text-xs text-stone-500 mb-4">
+                    <span className="flex items-center gap-1">
+                      <Play className="w-3 h-3" /> {submission.plays_count || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Music2 className="w-3 h-3" /> {submission.likes_count || 0}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {submission.youtube_link && (
+                      <a href={submission.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1">
+                        <Button size="sm" className="w-full bg-red-600 hover:bg-red-700">
+                          <Play className="w-4 h-4 mr-1 fill-white" />
+                          YouTube
+                        </Button>
+                      </a>
+                    )}
+                    {submission.spotify_link && (
+                      <a href={submission.spotify_link} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" variant="outline" className="border-green-500 text-green-700">
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Christian Memes */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl">
+        <ChristianMemeGallery />
       </section>
 
       {/* GoodGodMusics Releases */}
