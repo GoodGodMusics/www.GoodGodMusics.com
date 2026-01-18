@@ -10,6 +10,7 @@ import { base44 } from '@/api/base44Client';
 import EraSection from '@/components/bible/EraSection';
 import SuggestSongModal from '@/components/bible/SuggestSongModal';
 import RecommendationEngine from '@/components/recommendations/RecommendationEngine';
+import DailyDevotional from '@/components/bible/DailyDevotional';
 
 export default function BibleTimeline() {
   const [userId, setUserId] = useState(null);
@@ -185,6 +186,11 @@ export default function BibleTimeline() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* Daily Devotional */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto -mt-8 relative z-10">
+        <DailyDevotional />
       </section>
 
       {/* AI Recommendations */}
