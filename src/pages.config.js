@@ -3,10 +3,10 @@ import Admin from './pages/Admin';
 import BibleTimeline from './pages/BibleTimeline';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
-import Home from './pages/Home';
-import Store from './pages/Store';
 import Discover from './pages/Discover';
+import Home from './pages/Home';
 import Music from './pages/Music';
+import Store from './pages/Store';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
 import __Layout from './Layout.jsx';
@@ -18,10 +18,10 @@ export const PAGES = {
     "BibleTimeline": BibleTimeline,
     "Checkout": Checkout,
     "Contact": Contact,
-    "Home": Home,
-    "Store": Store,
     "Discover": Discover,
+    "Home": Home,
     "Music": Music,
+    "Store": Store,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
 }

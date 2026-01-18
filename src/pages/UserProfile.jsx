@@ -52,6 +52,16 @@ export default function UserProfile() {
     enabled: !!user?.email
   });
 
+  // Fetch character subscription
+  const { data: characterSubscription } = useQuery({
+    queryKey: ['characterSubscription', user?.email],
+    queryFn: async () => {
+      const subs = await base44.entities.CharacterSubscription.filter({ user_email: user.email, is_active: true });
+      return subs[0] || null;
+    },
+    enabled: !!user?.email
+  });
+
   const updateUserMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: (updatedUser) => {
@@ -95,16 +105,30 @@ export default function UserProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {/* Header with Character Icon */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <div className="flex justify-center mb-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-xl shadow-amber-500/30">
-              <User className="w-12 h-12 text-white" />
+          <div className="flex justify-center mb-6 relative">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-xl shadow-amber-500/30 border-4 border-white">
+              <User className="w-16 h-16 text-white" />
             </div>
+            
+            {/* Character Badge Overlay */}
+            {characterSubscription && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -bottom-2 bg-gradient-to-br from-purple-600 to-indigo-600 px-4 py-2 rounded-full shadow-xl border-2 border-white"
+              >
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-white" />
+                  <span className="text-white font-bold text-sm">{characterSubscription.current_character}</span>
+                </div>
+              </motion.div>
+            )}
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-stone-800 mb-2">
             {user?.full_name || 'User Profile'}
@@ -162,7 +186,11 @@ export default function UserProfile() {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="history" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-5 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+              <TabsTrigger value="character" className="rounded-lg">
+                <User className="w-4 h-4 mr-2" />
+                Character
+              </TabsTrigger>
               <TabsTrigger value="history" className="rounded-lg">
                 <Clock className="w-4 h-4 mr-2" />
                 History
@@ -180,6 +208,94 @@ export default function UserProfile() {
                 Settings
               </TabsTrigger>
             </TabsList>
+
+            {/* Character Tab */}
+            <TabsContent value="character">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5 text-purple-600" />
+                    Character of the Week Study
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {characterSubscription ? (
+                    <div className="space-y-6">
+                      {/* Current Character */}
+                      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border-2 border-purple-200">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                            <User className="w-10 h-10 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-stone-800">{characterSubscription.current_character}</h3>
+                            <p className="text-stone-600">Currently Studying</p>
+                            <Badge className="mt-1 bg-purple-600">Day {characterSubscription.day_counter}/7</Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white/60 rounded-xl p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="w-4 h-4 text-purple-600" />
+                            <span className="text-stone-700">
+                              Week: {new Date(characterSubscription.week_start_date).toLocaleDateString()} - {new Date(characterSubscription.week_end_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Bell className="w-4 h-4 text-purple-600" />
+                            <span className="text-stone-700">Daily emails with chapter summaries and songs</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Next Character */}
+                      {characterSubscription.auto_renew && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+                          <h4 className="font-bold text-stone-800 mb-3 flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-amber-600" />
+                            Coming Up Next Week
+                          </h4>
+                          <p className="text-stone-600 text-sm mb-3">
+                            Your subscription will auto-renew with a new biblical character on {new Date(new Date(characterSubscription.week_end_date).getTime() + 86400000).toLocaleDateString()}
+                          </p>
+                          <Badge variant="outline" className="border-amber-600 text-amber-800">
+                            Auto-Renew Active
+                          </Badge>
+                        </div>
+                      )}
+
+                      {/* Completed Characters */}
+                      {characterSubscription.completed_characters && characterSubscription.completed_characters.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-stone-800 mb-3">Previously Studied</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {characterSubscription.completed_characters.map((char, i) => (
+                              <Badge key={i} variant="outline" className="text-sm">
+                                {char}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <User className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-bold text-stone-800 mb-2">No Active Character Study</h3>
+                      <p className="text-stone-600 mb-6">
+                        Subscribe to Character of the Week to receive daily biblical insights
+                      </p>
+                      <Button
+                        onClick={() => window.location.href = '/Discover'}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        Subscribe Now
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* History Tab */}
             <TabsContent value="history">
