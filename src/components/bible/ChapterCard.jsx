@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Music2, ExternalLink, BookOpen, Heart } from 'lucide-react';
+import { Play, Music2, ExternalLink, BookOpen, Heart, BookHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import ShareButton from '@/components/ui-custom/ShareButton';
 import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
+import JournalModal from '@/components/bible/JournalModal';
 
 export default function ChapterCard({ chapter, onSuggestSong }) {
   const [userId, setUserId] = useState(null);
@@ -44,6 +45,7 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
   };
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
 
   const getYouTubeVideoId = (url) => {
     if (!url) return null;
@@ -105,6 +107,20 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                 <p className="text-stone-600 text-sm italic mt-3 leading-relaxed line-clamp-2">
                   "{chapter.key_verse}"
                 </p>
+              )}
+
+              {/* Key Themes */}
+              {chapter.key_themes && chapter.key_themes.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-stone-500 mb-1">Key Themes:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {chapter.key_themes.slice(0, 3).map((theme, i) => (
+                      <Badge key={i} variant="outline" className="text-xs border-purple-200 text-purple-700">
+                        {theme}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Song info */}
@@ -194,6 +210,19 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                     <div className="ml-auto flex gap-2">
                       <Button 
                         variant="outline" 
+                        size="sm"
+                        className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsJournalOpen(true);
+                        }}
+                      >
+                        <BookHeart className="w-4 h-4 mr-2" />
+                        Journal
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         className="border-amber-300 text-amber-800 hover:bg-amber-50"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -209,7 +238,7 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                         url={chapter.youtube_link || window.location.href}
                         hashtags={['Scripture', chapter.era?.replace(/\s+/g, ''), 'BibleStudy']}
                         variant="outline"
-                        size="default"
+                        size="sm"
                       />
                     </div>
                   </div>
@@ -228,6 +257,13 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                     </a>
                   )}
                 </div>
+
+                <JournalModal
+                  isOpen={isJournalOpen}
+                  onClose={() => setIsJournalOpen(false)}
+                  chapter={chapter}
+                  userEmail={userId}
+                />
               </div>
             </motion.div>
           )}
