@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import HeroSection from '@/components/ui-custom/HeroSection';
+import CommentSection from '@/components/comments/CommentSection';
 
 export default function Home() {
   // Fetch featured chapters with music
@@ -309,6 +310,11 @@ export default function Home() {
             </div>
           </div>
         </motion.div>
+      </section>
+
+      {/* Community Feedback Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <CommentSection pageReference="home" />
       </section>
     </div>
   );

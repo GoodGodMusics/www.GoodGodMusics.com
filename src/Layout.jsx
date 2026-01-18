@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
 import CartDrawer from '@/components/store/CartDrawer';
+import DonationButton from '@/components/ui-custom/DonationButton';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -65,6 +66,20 @@ export default function Layout({ children, currentPageName }) {
     setIsMenuOpen(false);
   }, [location]);
 
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUserRole(currentUser.role);
+      } catch (error) {
+        setUserRole(null);
+      }
+    };
+    checkUser();
+  }, []);
+
   const navLinks = [
     { name: 'Home', page: 'Home', icon: Home },
     { name: 'Bible Timeline', page: 'BibleTimeline', icon: BookOpen },
@@ -72,6 +87,10 @@ export default function Layout({ children, currentPageName }) {
     { name: 'About', page: 'About', icon: Info },
     { name: 'Contact', page: 'Contact', icon: Mail },
   ];
+
+  if (userRole === 'admin') {
+    navLinks.push({ name: 'Admin', page: 'Admin', icon: ShoppingCart });
+  }
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -157,6 +176,11 @@ export default function Layout({ children, currentPageName }) {
 
             {/* Right side actions */}
             <div className="flex items-center gap-3">
+              {/* Donation button */}
+              <div className="hidden md:block">
+                <DonationButton variant="inline" size="sm" className="text-sm" />
+              </div>
+
               {/* Cart button */}
               <Button
                 variant="ghost"
@@ -237,6 +261,9 @@ export default function Layout({ children, currentPageName }) {
         {children}
       </main>
 
+      {/* Floating Donation Button */}
+      <DonationButton variant="floating" />
+
       {/* Footer */}
       <footer className="bg-gradient-to-b from-stone-800 to-stone-900 text-white mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -294,6 +321,12 @@ export default function Layout({ children, currentPageName }) {
                 <li><a href="#" className="hover:text-amber-300 transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-amber-300 transition-colors">Terms of Service</a></li>
               </ul>
+              <div className="mt-6">
+                <DonationButton variant="inline" size="sm" className="w-full justify-center" />
+              </div>
+              <p className="text-xs text-stone-500 mt-3">
+                Supporting GoodGodMusics Independent Label via DistroKid
+              </p>
             </div>
           </div>
 

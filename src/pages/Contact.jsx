@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
+import CommentSection from '@/components/comments/CommentSection';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -246,6 +247,11 @@ export default function Contact() {
             </form>
           </motion.div>
         </div>
+      </section>
+
+      {/* Community Comments */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <CommentSection pageReference="contact" />
       </section>
 
       {/* FAQ CTA */}
