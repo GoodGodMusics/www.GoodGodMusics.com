@@ -11,6 +11,8 @@ import EraSection from '@/components/bible/EraSection';
 import SuggestSongModal from '@/components/bible/SuggestSongModal';
 import RecommendationEngine from '@/components/recommendations/RecommendationEngine';
 import DailyDevotional from '@/components/bible/DailyDevotional';
+import ReadingMetrics from '@/components/community/ReadingMetrics';
+import ConnectionRequestModal from '@/components/community/ConnectionRequestModal';
 
 export default function BibleTimeline() {
   const [userId, setUserId] = useState(null);
@@ -33,6 +35,8 @@ export default function BibleTimeline() {
   const [filterHasMusic, setFilterHasMusic] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [connectionChapterRef, setConnectionChapterRef] = useState(null);
 
   const { data: chapters = [], isLoading } = useQuery({
     queryKey: ['bibleChapters'],
@@ -193,9 +197,24 @@ export default function BibleTimeline() {
         <DailyDevotional />
       </section>
 
-      {/* AI Recommendations */}
+      {/* AI Recommendations and Reading Metrics */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <RecommendationEngine userId={userId} />
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="md:col-span-2">
+            <RecommendationEngine userId={userId} />
+          </div>
+          <div>
+            <ReadingMetrics />
+            <div className="mt-6">
+              <Button
+                onClick={() => setIsConnectionModalOpen(true)}
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+              >
+                Connect with Readers
+              </Button>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Content */}
@@ -251,6 +270,13 @@ export default function BibleTimeline() {
           setIsSuggestModalOpen(false);
           setSelectedChapter(null);
         }}
+      />
+
+      {/* Connection Request Modal */}
+      <ConnectionRequestModal
+        isOpen={isConnectionModalOpen}
+        onClose={() => setIsConnectionModalOpen(false)}
+        chapterReference={connectionChapterRef}
       />
     </div>
   );
