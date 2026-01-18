@@ -350,8 +350,8 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
           <TabsContent value="posts">
             {/* Posts List */}
             <div className="grid md:grid-cols-3 gap-6">
-          {/* Posts */}
-          <div className="md:col-span-2 space-y-4">
+              {/* Posts */}
+              <div className="md:col-span-2 space-y-4">
             {isLoading ? (
               <div className="text-center py-12">
                 <MessageSquare className="w-12 h-12 text-stone-400 animate-pulse mx-auto mb-4" />
@@ -431,10 +431,10 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                 </motion.div>
               ))
             )}
-          </div>
+              </div>
 
-          {/* Selected Post Details */}
-          <div className="md:col-span-1">
+              {/* Selected Post Details */}
+              <div className="md:col-span-1">
             {selectedPost ? (
               <Card className="sticky top-24">
                 <CardHeader>
@@ -496,6 +496,7 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                 </CardContent>
               </Card>
             )}
+              </div>
             </div>
           </TabsContent>
 
