@@ -176,8 +176,12 @@ export default function TheBook() {
                       <motion.a
                         key={chapter.id}
                         href={chapter.youtube_link || '#'}
-                        target={chapter.youtube_link ? '_blank' : '_self'}
-                        rel={chapter.youtube_link ? 'noopener noreferrer' : ''}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={chapter.youtube_link 
+                          ? `Play ${bookName} Chapter ${chapter.chapter_number}${chapter.song_title ? ` - ${chapter.song_title}` : ''}` 
+                          : `${bookName} Chapter ${chapter.chapter_number} - No music available`
+                        }
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: (bookIndex * 0.05) + (chapterIndex * 0.01) }}
@@ -188,7 +192,7 @@ export default function TheBook() {
                           transition-all duration-300
                           ${chapter.youtube_link 
                             ? 'bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md hover:shadow-xl' 
-                            : 'bg-stone-200/80 text-stone-500 cursor-default'
+                            : 'bg-stone-200/80 text-stone-500 cursor-not-allowed pointer-events-none'
                           }
                         `}
                         style={{
