@@ -8,6 +8,7 @@ import ShareButton from '@/components/ui-custom/ShareButton';
 import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
 import JournalModal from '@/components/bible/JournalModal';
 import BibleQuizModal from '@/components/quiz/BibleQuizModal';
+import AddToPlaylistButton from '@/components/playlists/AddToPlaylistButton';
 
 export default function ChapterCard({ chapter, onSuggestSong }) {
   const [userId, setUserId] = useState(null);
@@ -234,6 +235,7 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                         <BookHeart className="w-4 h-4 mr-2" />
                         Journal
                       </Button>
+                      <AddToPlaylistButton chapter={chapter} size="sm" />
                       <Button 
                         variant="outline" 
                         size="sm"

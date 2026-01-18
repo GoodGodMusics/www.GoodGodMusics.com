@@ -13,6 +13,8 @@ import { base44 } from '@/api/base44Client';
 import { Separator } from '@/components/ui/separator';
 import CharityStore from '@/components/quiz/CharityStore';
 import PlaylistManager from '@/components/playlists/PlaylistManager';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
@@ -143,6 +145,9 @@ export default function UserProfile() {
             {user?.full_name || 'User Profile'}
           </h1>
           <p className="text-stone-600">{user?.email}</p>
+          {user?.bio && (
+            <div className="mt-3 max-w-2xl mx-auto text-stone-600 text-sm prose prose-sm" dangerouslySetInnerHTML={{ __html: user.bio }} />
+          )}
           {user?.role === 'admin' && (
             <Badge className="mt-3 bg-amber-600">Admin</Badge>
           )}
@@ -624,6 +629,24 @@ export default function UserProfile() {
                       <div>
                         <Label htmlFor="name">Full Name</Label>
                         <Input id="name" value={user?.full_name} disabled className="bg-stone-100" />
+                      </div>
+                      <div>
+                        <Label htmlFor="bio">Profile Bio</Label>
+                        <div className="bg-white rounded-lg border border-stone-200">
+                          <ReactQuill
+                            theme="snow"
+                            value={user?.bio || ''}
+                            onChange={(value) => updateUserMutation.mutate({ bio: value })}
+                            placeholder="Tell us about yourself..."
+                            modules={{
+                              toolbar: [
+                                ['bold', 'italic', 'underline'],
+                                [{ list: 'ordered' }, { list: 'bullet' }],
+                                ['clean']
+                              ]
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
