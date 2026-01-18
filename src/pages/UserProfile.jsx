@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Music2, BookOpen, MessageSquare, Settings, Heart, Play, Clock, Mail, Bell, BellOff } from 'lucide-react';
+import { User, Music2, BookOpen, MessageSquare, Settings, Heart, Play, Clock, Mail, Bell, BellOff, Award, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Separator } from '@/components/ui/separator';
+import CharityStore from '@/components/quiz/CharityStore';
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
@@ -59,6 +60,13 @@ export default function UserProfile() {
       const subs = await base44.entities.CharacterSubscription.filter({ user_email: user.email, is_active: true });
       return subs[0] || null;
     },
+    enabled: !!user?.email
+  });
+
+  // Fetch user quizzes
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ['userQuizzes', user?.email],
+    queryFn: () => base44.entities.Quiz.filter({ user_email: user?.email }, '-created_date', 50),
     enabled: !!user?.email
   });
 
@@ -144,8 +152,16 @@ export default function UserProfile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
         >
+          <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
+            <CardContent className="pt-6 text-center">
+              <Award className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-amber-800">{user?.prayer_points || 0}</div>
+              <div className="text-sm text-amber-700">Prayer Points</div>
+            </CardContent>
+          </Card>
+
           <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
             <CardContent className="pt-6 text-center">
               <Heart className="w-8 h-8 text-red-500 mx-auto mb-2" />
@@ -156,9 +172,9 @@ export default function UserProfile() {
 
           <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
             <CardContent className="pt-6 text-center">
-              <Play className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-stone-800">{playedInteractions.length}</div>
-              <div className="text-sm text-stone-600">Played</div>
+              <Brain className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-stone-800">{quizzes.length}</div>
+              <div className="text-sm text-stone-600">Quizzes</div>
             </CardContent>
           </Card>
 
@@ -185,8 +201,16 @@ export default function UserProfile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Tabs defaultValue="history" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+          <Tabs defaultValue="quizzes" className="w-full">
+            <TabsList className="grid w-full grid-cols-7 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+              <TabsTrigger value="quizzes" className="rounded-lg">
+                <Brain className="w-4 h-4 mr-2" />
+                Quizzes
+              </TabsTrigger>
+              <TabsTrigger value="charity" className="rounded-lg">
+                <Heart className="w-4 h-4 mr-2" />
+                Charity
+              </TabsTrigger>
               <TabsTrigger value="character" className="rounded-lg">
                 <User className="w-4 h-4 mr-2" />
                 Character
@@ -208,6 +232,84 @@ export default function UserProfile() {
                 Settings
               </TabsTrigger>
             </TabsList>
+
+            {/* Quizzes Tab */}
+            <TabsContent value="quizzes">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-blue-600" />
+                    Bible Quiz History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {quizzes.length > 0 ? (
+                    <div className="space-y-3">
+                      {quizzes.map((quiz) => (
+                        <div key={quiz.id} className="p-4 bg-stone-50 rounded-lg border border-stone-200">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <div className="font-semibold text-stone-800">{quiz.book_name}</div>
+                              <div className="text-sm text-stone-600">
+                                Score: {quiz.score}/10 • {quiz.points_earned} points earned
+                              </div>
+                              <div className="text-xs text-stone-500">
+                                {new Date(quiz.created_date).toLocaleDateString()} • {quiz.completion_time_seconds}s
+                              </div>
+                            </div>
+                            <Badge className={quiz.score === 10 ? 'bg-green-600' : quiz.score >= 6 ? 'bg-blue-600' : 'bg-stone-400'}>
+                              {quiz.score === 10 ? 'Perfect!' : quiz.score >= 8 ? 'Great' : quiz.score >= 6 ? 'Good' : 'Try Again'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Brain className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-bold text-stone-800 mb-2">No Quizzes Yet</h3>
+                      <p className="text-stone-600 mb-6">
+                        Test your Bible knowledge and earn prayer points!
+                      </p>
+                      <Button
+                        onClick={() => window.location.href = '/BibleTimeline'}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Take Your First Quiz
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {user?.total_quizzes_taken > 0 && (
+                    <div className="mt-6 pt-6 border-t border-stone-200">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">{user?.total_quizzes_taken}</div>
+                          <div className="text-xs text-stone-600">Total Quizzes</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">{user?.perfect_scores || 0}</div>
+                          <div className="text-xs text-stone-600">Perfect Scores</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-amber-600">{user?.prayer_points || 0}</div>
+                          <div className="text-xs text-stone-600">Points Earned</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Charity Store Tab */}
+            <TabsContent value="charity">
+              <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
+                <CardContent className="p-6">
+                  <CharityStore />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Character Tab */}
             <TabsContent value="character">

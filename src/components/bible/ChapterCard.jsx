@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Music2, ExternalLink, BookOpen, Heart, BookHeart } from 'lucide-react';
+import { Play, Music2, ExternalLink, BookOpen, Heart, BookHeart, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import ShareButton from '@/components/ui-custom/ShareButton';
 import LikeDislikeButton from '@/components/discovery/LikeDislikeButton';
 import JournalModal from '@/components/bible/JournalModal';
+import BibleQuizModal from '@/components/quiz/BibleQuizModal';
 
 export default function ChapterCard({ chapter, onSuggestSong }) {
   const [userId, setUserId] = useState(null);
@@ -46,6 +47,7 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   const getYouTubeVideoId = (url) => {
     if (!url) return null;
@@ -211,6 +213,18 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                       <Button 
                         variant="outline" 
                         size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsQuizOpen(true);
+                        }}
+                      >
+                        <Brain className="w-4 h-4 mr-2" />
+                        Quiz
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         className="border-purple-300 text-purple-700 hover:bg-purple-50"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -263,6 +277,11 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                   onClose={() => setIsJournalOpen(false)}
                   chapter={chapter}
                   userEmail={userId}
+                />
+                <BibleQuizModal
+                  isOpen={isQuizOpen}
+                  onClose={() => setIsQuizOpen(false)}
+                  bookName={chapter.book}
                 />
               </div>
             </motion.div>
