@@ -11,12 +11,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import ForumAnalytics from '@/components/forums/ForumAnalytics';
+import TagFilter from '@/components/tags/TagFilter';
+import TagInput from '@/components/tags/TagInput';
 
 export default function Forums() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [replyText, setReplyText] = useState('');
   const queryClient = useQueryClient();
@@ -91,7 +94,7 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
         ...postData,
         author_email: currentUser.email,
         author_name: currentUser.full_name,
-        tags: postData.tags ? postData.tags.split(',').map(t => t.trim()) : [],
+        tags: Array.isArray(postData.tags) ? postData.tags : (postData.tags ? postData.tags.split(',').map(t => t.trim()) : []),
         moderation_flag: moderationResult.suggested_action === 'flag' ? moderationResult.reason : null
       });
 
@@ -196,12 +199,22 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
     }
   };
 
+  // Get all unique tags from posts
+  const allTags = posts.reduce((tags, post) => {
+    if (post.tags && Array.isArray(post.tags)) {
+      tags.push(...post.tags);
+    }
+    return tags;
+  }, []);
+
   const filteredPosts = posts.filter(post => {
     const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
     const matchesSearch = !searchQuery || 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesTags = selectedTags.length === 0 || 
+      (post.tags && selectedTags.every(tag => post.tags.includes(tag)));
+    return matchesCategory && matchesSearch && matchesTags;
   });
 
   const isSubscribed = (postId) => subscriptions.some(s => s.post_id === postId);
@@ -238,38 +251,55 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
         </motion.div>
 
         {/* Filters & Create Button */}
-        <div className="mb-8 flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
-            <Input
-              placeholder="Search discussions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 border-stone-300"
-            />
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
+              <Input
+                placeholder="Search discussions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 border-stone-300"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="prayer_request">Prayer Requests</SelectItem>
+                <SelectItem value="question">Questions</SelectItem>
+                <SelectItem value="testimony">Testimonies</SelectItem>
+                <SelectItem value="feedback">Feedback</SelectItem>
+                <SelectItem value="discussion">Discussions</SelectItem>
+                <SelectItem value="tribulation">Tribulations</SelectItem>
+              </SelectContent>
+            </Select>
+            {currentUser && (
+              <Button
+                onClick={() => setShowCreatePost(!showCreatePost)}
+                className="bg-amber-600 hover:bg-amber-700 w-full md:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Post
+              </Button>
+            )}
           </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="prayer_request">Prayer Requests</SelectItem>
-              <SelectItem value="question">Questions</SelectItem>
-              <SelectItem value="testimony">Testimonies</SelectItem>
-              <SelectItem value="feedback">Feedback</SelectItem>
-              <SelectItem value="discussion">Discussions</SelectItem>
-              <SelectItem value="tribulation">Tribulations</SelectItem>
-            </SelectContent>
-          </Select>
-          {currentUser && (
-            <Button
-              onClick={() => setShowCreatePost(!showCreatePost)}
-              className="bg-amber-600 hover:bg-amber-700 w-full md:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Post
-            </Button>
+
+          {/* Tag Filter */}
+          {allTags.length > 0 && (
+            <TagFilter
+              allTags={allTags}
+              selectedTags={selectedTags}
+              onTagToggle={(tag) => {
+                setSelectedTags(prev =>
+                  prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                );
+              }}
+              onClearAll={() => setSelectedTags([])}
+              placeholder="Filter by tags..."
+            />
           )}
         </div>
 
@@ -313,12 +343,14 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
                         <SelectItem value="tribulation">Tribulation</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input
-                      placeholder="Tags (comma-separated)"
-                      value={newPost.tags}
-                      onChange={(e) => setNewPost({...newPost, tags: e.target.value})}
-                      className="flex-1"
-                    />
+                    <div className="flex-1">
+                      <TagInput
+                        tags={newPost.tags ? (typeof newPost.tags === 'string' ? newPost.tags.split(',').map(t => t.trim()).filter(Boolean) : newPost.tags) : []}
+                        onChange={(tags) => setNewPost({...newPost, tags})}
+                        suggestions={allTags.filter((tag, index, self) => self.indexOf(tag) === index)}
+                        placeholder="Add tags..."
+                      />
+                    </div>
                   </div>
                   <div className="flex gap-3">
                     <Button type="button" variant="outline" onClick={() => setShowCreatePost(false)}>

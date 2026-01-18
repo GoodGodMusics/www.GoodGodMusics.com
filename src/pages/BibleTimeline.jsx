@@ -13,6 +13,7 @@ import RecommendationEngine from '@/components/recommendations/RecommendationEng
 import DailyDevotional from '@/components/bible/DailyDevotional';
 import ReadingMetrics from '@/components/community/ReadingMetrics';
 import ConnectionRequestModal from '@/components/community/ConnectionRequestModal';
+import TagFilter from '@/components/tags/TagFilter';
 
 export default function BibleTimeline() {
   const [userId, setUserId] = useState(null);
@@ -33,6 +34,7 @@ export default function BibleTimeline() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTestament, setSelectedTestament] = useState('all');
   const [filterHasMusic, setFilterHasMusic] = useState(false);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
@@ -42,6 +44,17 @@ export default function BibleTimeline() {
     queryKey: ['bibleChapters'],
     queryFn: () => base44.entities.BibleChapter.list('chronological_order', 1500)
   });
+
+  // Get all unique tags from chapters
+  const allTags = useMemo(() => {
+    const tags = [];
+    chapters.forEach(chapter => {
+      if (chapter.key_themes && Array.isArray(chapter.key_themes)) {
+        tags.push(...chapter.key_themes);
+      }
+    });
+    return tags;
+  }, [chapters]);
 
   // Filter chapters
   const filteredChapters = useMemo(() => {
@@ -57,9 +70,12 @@ export default function BibleTimeline() {
       
       const matchesMusic = !filterHasMusic || chapter.youtube_link;
       
-      return matchesSearch && matchesTestament && matchesMusic;
+      const matchesTags = selectedTags.length === 0 || 
+        (chapter.key_themes && selectedTags.every(tag => chapter.key_themes.includes(tag)));
+      
+      return matchesSearch && matchesTestament && matchesMusic && matchesTags;
     });
-  }, [chapters, searchQuery, selectedTestament, filterHasMusic]);
+  }, [chapters, searchQuery, selectedTestament, filterHasMusic, selectedTags]);
 
   // Group chapters by era
   const chaptersByEra = useMemo(() => {
@@ -157,7 +173,7 @@ export default function BibleTimeline() {
 
       {/* Filters */}
       <section className="sticky top-20 z-30 bg-white/90 backdrop-blur-lg border-b border-stone-200 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Search */}
             <div className="relative flex-1 w-full md:max-w-md">
@@ -189,6 +205,21 @@ export default function BibleTimeline() {
               Has Music
             </Button>
           </div>
+
+          {/* Tag Filter */}
+          {allTags.length > 0 && (
+            <TagFilter
+              allTags={allTags}
+              selectedTags={selectedTags}
+              onTagToggle={(tag) => {
+                setSelectedTags(prev =>
+                  prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                );
+              }}
+              onClearAll={() => setSelectedTags([])}
+              placeholder="Filter by biblical themes..."
+            />
+          )}
         </div>
       </section>
 
