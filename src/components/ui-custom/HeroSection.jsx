@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Play, BookOpen, ShoppingBag } from 'lucide-react';
+import { Play, BookOpen, ShoppingBag, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
