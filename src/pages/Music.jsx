@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import DonationButton from '@/components/ui-custom/DonationButton';
+import ShareButton from '@/components/ui-custom/ShareButton';
 
 export default function Music() {
   const { data: releases = [], isLoading } = useQuery({
@@ -182,6 +183,14 @@ export default function Music() {
                           </Button>
                         </a>
                       )}
+                      <ShareButton
+                        title={`${release.title} - GoodGodMusics`}
+                        description={release.description || `New worship music: ${release.title} by ${release.artist}`}
+                        url={release.youtube_link || release.spotify_link || window.location.href}
+                        hashtags={release.biblical_themes?.slice(0, 2) || ['Worship', 'ChristianMusic']}
+                        variant="ghost"
+                        size="icon"
+                      />
                     </div>
                   </div>
                 </motion.div>
@@ -251,7 +260,7 @@ export default function Music() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       {release.youtube_link && (
                         <a href={release.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1">
                           <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-xs">
@@ -259,11 +268,14 @@ export default function Music() {
                           </Button>
                         </a>
                       )}
-                      {(release.spotify_link || release.apple_music_link) && (
-                        <Button size="sm" variant="outline" className="flex-shrink-0">
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      )}
+                      <ShareButton
+                        title={`${release.title} - GoodGodMusics`}
+                        description={release.description || `${release.title} by ${release.artist}`}
+                        url={release.youtube_link || release.spotify_link || window.location.href}
+                        hashtags={['GoodGodMusics', 'Worship']}
+                        variant="ghost"
+                        size="sm"
+                      />
                     </div>
                   </div>
                 </motion.div>

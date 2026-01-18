@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import ShareButton from '@/components/ui-custom/ShareButton';
 
 export default function RecommendationEngine({ currentChapter = null, userId = null }) {
   const [recommendations, setRecommendations] = useState({
@@ -230,16 +231,26 @@ Provide specific, actionable recommendations with brief explanations.`,
                   <p className="text-sm text-stone-600">{song.artist}</p>
                   <p className="text-xs text-purple-700 mt-1 italic">{song.reason}</p>
                 </div>
-                <a
-                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(song.youtube_search || `${song.title} ${song.artist}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0"
-                >
-                  <Button size="sm" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100">
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                </a>
+                <div className="flex gap-1">
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(song.youtube_search || `${song.title} ${song.artist}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0"
+                  >
+                    <Button size="sm" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100">
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                  </a>
+                  <ShareButton
+                    title={`${song.title} by ${song.artist}`}
+                    description={`AI recommended: ${song.reason}`}
+                    url={`https://www.youtube.com/results?search_query=${encodeURIComponent(song.youtube_search || `${song.title} ${song.artist}`)}`}
+                    hashtags={['AIRecommendation', 'Worship']}
+                    variant="ghost"
+                    size="sm"
+                  />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -346,6 +357,14 @@ Provide specific, actionable recommendations with brief explanations.`,
                       </Button>
                     </a>
                   )}
+                  <ShareButton
+                    title={`${release.title} - GoodGodMusics`}
+                    description={`AI recommended: ${release.aiReason}`}
+                    url={release.youtube_link || release.spotify_link || window.location.href}
+                    hashtags={release.biblical_themes?.slice(0, 2) || ['GoodGodMusics']}
+                    variant="ghost"
+                    size="sm"
+                  />
                 </div>
               </motion.div>
             ))}

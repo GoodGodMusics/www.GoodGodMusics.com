@@ -4,6 +4,7 @@ import { Play, Music2, ExternalLink, BookOpen, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
+import ShareButton from '@/components/ui-custom/ShareButton';
 
 export default function ChapterCard({ chapter, onSuggestSong }) {
   const [userId, setUserId] = useState(null);
@@ -186,7 +187,7 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {chapter.youtube_link && (
                     <a
                       href={chapter.youtube_link}
@@ -209,8 +210,16 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
                     }}
                   >
                     <Heart className="w-4 h-4 mr-2" />
-                    Suggest Song
+                    Suggest
                   </Button>
+                  <ShareButton
+                    title={`${chapter.book} ${chapter.chapter_number} - Bible Harmony`}
+                    description={chapter.song_title ? `Listen to "${chapter.song_title}" paired with ${chapter.book} ${chapter.chapter_number}` : chapter.summary || chapter.key_verse}
+                    url={chapter.youtube_link || window.location.href}
+                    hashtags={['Scripture', chapter.era?.replace(/\s+/g, ''), 'BibleStudy']}
+                    variant="outline"
+                    size="default"
+                  />
                 </div>
               </div>
             </motion.div>
