@@ -94,6 +94,10 @@ export default function Layout({ children, currentPageName }) {
   if (userRole === 'admin') {
     navLinks.push({ name: 'Admin', page: 'Admin', icon: ShoppingCart });
   }
+  
+  if (userRole) {
+    navLinks.push({ name: 'Profile', page: 'UserProfile', icon: Home });
+  }
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 

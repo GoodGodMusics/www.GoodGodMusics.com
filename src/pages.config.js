@@ -8,6 +8,7 @@ import Store from './pages/Store';
 import Discover from './pages/Discover';
 import Music from './pages/Music';
 import TheBook from './pages/TheBook';
+import UserProfile from './pages/UserProfile';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Discover": Discover,
     "Music": Music,
     "TheBook": TheBook,
+    "UserProfile": UserProfile,
 }
 
 export const pagesConfig = {
