@@ -4,12 +4,13 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, X, ShoppingCart, BookOpen, Home, Store, 
-  Info, Mail, ChevronDown, Music2
+  Info, Mail, ChevronDown, Music2, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
 import CartDrawer from '@/components/store/CartDrawer';
 import DonationButton from '@/components/ui-custom/DonationButton';
+import MessagingPanel from '@/components/community/MessagingPanel';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -86,6 +87,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Bible Timeline', page: 'BibleTimeline', icon: BookOpen },
     { name: 'Discover', page: 'Discover', icon: Music2 },
     { name: 'Music', page: 'Music', icon: Music2 },
+    { name: 'Forums', page: 'Forums', icon: MessageSquare },
     { name: 'Store', page: 'Store', icon: Store },
     { name: 'About', page: 'About', icon: Info },
     { name: 'Contact', page: 'Contact', icon: Mail },
@@ -270,6 +272,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Floating Donation Button */}
       <DonationButton variant="floating" />
+
+      {/* Messaging Panel */}
+      <MessagingPanel />
 
       {/* Footer */}
       <footer className="bg-gradient-to-b from-stone-800 to-stone-900 text-white mt-20">
