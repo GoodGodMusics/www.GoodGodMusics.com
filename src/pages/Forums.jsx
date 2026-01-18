@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Plus, ThumbsUp, MessageCircle, Pin, Lock, Send, Search, Filter } from 'lucide-react';
+import { MessageSquare, Plus, ThumbsUp, MessageCircle, Pin, Lock, Send, Search, Filter, Bell, BellOff, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import ForumAnalytics from '@/components/forums/ForumAnalytics';
 
 export default function Forums() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -51,40 +53,134 @@ export default function Forums() {
     enabled: !!selectedPost
   });
 
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ['forumSubscriptions', currentUser?.email],
+    queryFn: () => {
+      if (!currentUser) return [];
+      return base44.entities.ForumSubscription.filter({ user_email: currentUser.email });
+    },
+    enabled: !!currentUser
+  });
+
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
-      return base44.entities.ForumPost.create({
+      // AI Moderation check
+      const moderationResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a content moderator for a Christian community forum. Analyze the following post for inappropriate content including hate speech, profanity, spam, or non-faith-related content. 
+
+Title: ${postData.title}
+Content: ${postData.content}
+
+Respond with a JSON object indicating if the content is appropriate and why.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            is_appropriate: { type: "boolean" },
+            reason: { type: "string" },
+            severity: { type: "string", enum: ["clean", "minor", "moderate", "severe"] },
+            suggested_action: { type: "string", enum: ["approve", "flag", "reject"] }
+          }
+        }
+      });
+
+      if (moderationResult.suggested_action === 'reject') {
+        throw new Error(`Content flagged: ${moderationResult.reason}`);
+      }
+
+      const post = await base44.entities.ForumPost.create({
         ...postData,
         author_email: currentUser.email,
         author_name: currentUser.full_name,
-        tags: postData.tags ? postData.tags.split(',').map(t => t.trim()) : []
+        tags: postData.tags ? postData.tags.split(',').map(t => t.trim()) : [],
+        moderation_flag: moderationResult.suggested_action === 'flag' ? moderationResult.reason : null
       });
+
+      return post;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['forumPosts'] });
       setShowCreatePost(false);
       setNewPost({ title: '', content: '', category: 'discussion', tags: '' });
+    },
+    onError: (error) => {
+      alert(error.message || 'Failed to create post');
     }
   });
 
   const createReplyMutation = useMutation({
     mutationFn: async ({ postId, content }) => {
+      // AI Moderation for replies
+      const moderationResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a content moderator. Check if this reply is appropriate: "${content}"`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            is_appropriate: { type: "boolean" },
+            reason: { type: "string" }
+          }
+        }
+      });
+
+      if (!moderationResult.is_appropriate) {
+        throw new Error(`Reply flagged: ${moderationResult.reason}`);
+      }
+
       await base44.entities.ForumReply.create({
         post_id: postId,
         author_email: currentUser.email,
         author_name: currentUser.full_name,
         content
       });
+      
       // Update reply count
       const post = posts.find(p => p.id === postId);
       await base44.entities.ForumPost.update(postId, {
         replies_count: (post.replies_count || 0) + 1
       });
+
+      // Notify subscribers
+      const postSubscribers = await base44.entities.ForumSubscription.filter({ 
+        post_id: postId,
+        notify_replies: true 
+      });
+      
+      for (const sub of postSubscribers) {
+        if (sub.user_email !== currentUser.email) {
+          await base44.integrations.Core.SendEmail({
+            to: sub.user_email,
+            subject: `New reply on: ${post.title}`,
+            body: `${currentUser.full_name} replied to the discussion "${post.title}".\n\nReply: ${content}\n\nView the discussion at Bible Harmony Forums.`
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['forumPosts'] });
       queryClient.invalidateQueries({ queryKey: ['forumReplies'] });
       setReplyText('');
+    },
+    onError: (error) => {
+      alert(error.message || 'Failed to post reply');
+    }
+  });
+
+  const toggleSubscriptionMutation = useMutation({
+    mutationFn: async (postId) => {
+      const existing = subscriptions.find(s => s.post_id === postId);
+      if (existing) {
+        await base44.entities.ForumSubscription.delete(existing.id);
+      } else {
+        const post = posts.find(p => p.id === postId);
+        await base44.entities.ForumSubscription.create({
+          user_email: currentUser.email,
+          post_id: postId,
+          post_title: post.title,
+          notify_replies: true
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forumSubscriptions'] });
     }
   });
 
@@ -107,6 +203,8 @@ export default function Forums() {
       post.content.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  const isSubscribed = (postId) => subscriptions.some(s => s.post_id === postId);
 
   const categoryColors = {
     prayer_request: 'bg-purple-100 text-purple-800',
@@ -236,8 +334,22 @@ export default function Forums() {
           </motion.div>
         )}
 
-        {/* Posts List */}
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* Tabs for Posts and Analytics */}
+        <Tabs defaultValue="posts" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="posts">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Discussions
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="posts">
+            {/* Posts List */}
+            <div className="grid md:grid-cols-3 gap-6">
           {/* Posts */}
           <div className="md:col-span-2 space-y-4">
             {isLoading ? (
@@ -259,13 +371,14 @@ export default function Forums() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setSelectedPost(post)}>
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
+                        <div className="flex-1" onClick={() => setSelectedPost(post)}>
                           <div className="flex items-center gap-2 mb-2">
                             {post.is_pinned && <Pin className="w-4 h-4 text-amber-600" />}
                             {post.is_locked && <Lock className="w-4 h-4 text-stone-400" />}
+                            {post.moderation_flag && <AlertTriangle className="w-4 h-4 text-yellow-600" title={post.moderation_flag} />}
                             <Badge className={categoryColors[post.category]}>
                               {post.category.replace('_', ' ')}
                             </Badge>
@@ -273,6 +386,23 @@ export default function Forums() {
                           <h3 className="text-xl font-bold text-stone-800 mb-2">{post.title}</h3>
                           <p className="text-stone-600 line-clamp-2">{post.content}</p>
                         </div>
+                        {currentUser && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSubscriptionMutation.mutate(post.id);
+                            }}
+                            className="flex-shrink-0"
+                          >
+                            {isSubscribed(post.id) ? (
+                              <Bell className="w-5 h-5 text-amber-600" />
+                            ) : (
+                              <BellOff className="w-5 h-5 text-stone-400" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                       <div className="flex items-center justify-between text-sm text-stone-500">
                         <span>by {post.author_name}</span>
@@ -366,8 +496,13 @@ export default function Forums() {
                 </CardContent>
               </Card>
             )}
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <ForumAnalytics />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
