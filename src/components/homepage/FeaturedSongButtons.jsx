@@ -13,16 +13,12 @@ export default function FeaturedSongButtons() {
     }
   });
 
-  // Split songs by position (1-3 left, 4-6 right)
-  const leftSongs = featuredSongs.filter(s => s.position >= 1 && s.position <= 3);
-  const rightSongs = featuredSongs.filter(s => s.position >= 4 && s.position <= 6);
-
   const extractYoutubeId = (url) => {
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     return match ? match[1] : null;
   };
 
-  const SongButton = ({ song, index, side }) => {
+  const SongButton = ({ song, index }) => {
     const youtubeId = extractYoutubeId(song.youtube_link);
     const thumbnailUrl = song.thumbnail_url || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null);
 
@@ -31,8 +27,8 @@ export default function FeaturedSongButtons() {
         href={song.youtube_link}
         target="_blank"
         rel="noopener noreferrer"
-        initial={{ opacity: 0, x: side === 'left' ? -100 : 100 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.1 }}
         className="group relative"
       >
@@ -56,7 +52,7 @@ export default function FeaturedSongButtons() {
         </div>
 
         {/* Tooltip */}
-        <div className={`absolute ${side === 'left' ? 'left-full ml-4' : 'right-full mr-4'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
+        <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <div className="bg-stone-900 text-white px-4 py-2 rounded-lg shadow-xl whitespace-nowrap">
             <p className="font-bold text-sm">{song.song_title}</p>
             {song.artist_name && (
@@ -71,24 +67,13 @@ export default function FeaturedSongButtons() {
   if (featuredSongs.length === 0) return null;
 
   return (
-    <div className="fixed top-32 left-0 right-0 pointer-events-none z-30">
-      {/* Left side buttons */}
-      {leftSongs.length > 0 && (
-        <div className="absolute left-4 top-0 flex flex-col gap-6 pointer-events-auto">
-          {leftSongs.map((song, index) => (
-            <SongButton key={song.id} song={song} index={index} side="left" />
-          ))}
-        </div>
-      )}
-
-      {/* Right side buttons */}
-      {rightSongs.length > 0 && (
-        <div className="absolute right-4 top-0 flex flex-col gap-6 pointer-events-auto">
-          {rightSongs.map((song, index) => (
-            <SongButton key={song.id} song={song} index={index} side="right" />
-          ))}
-        </div>
-      )}
+    <div className="fixed top-24 left-0 right-0 pointer-events-none z-30">
+      {/* Top center buttons */}
+      <div className="flex justify-center gap-4 pointer-events-auto">
+        {featuredSongs.map((song, index) => (
+          <SongButton key={song.id} song={song} index={index} side="center" />
+        ))}
+      </div>
     </div>
   );
 }

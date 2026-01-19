@@ -73,6 +73,7 @@ export default function Admin() {
 
   const [editingFeaturedSong, setEditingFeaturedSong] = useState(null);
   const [featuredSongData, setFeaturedSongData] = useState({});
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
   useEffect(() => {
     if (homepageSettings) {
@@ -140,6 +141,21 @@ export default function Admin() {
       setFeaturedSongData({});
     }
   });
+
+  const handleThumbnailUpload = async (e, position) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingThumbnail(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFeaturedSongData({ ...featuredSongData, thumbnail_url: file_url });
+    } catch (error) {
+      alert('Failed to upload thumbnail');
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
 
   const filteredChapters = chapters.filter(chapter => 
     !searchQuery || 
@@ -358,10 +374,10 @@ export default function Admin() {
             <div className="bg-white rounded-3xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-stone-800 mb-2">Featured Song Buttons</h2>
               <p className="text-stone-600 mb-6">
-                Manage 6 promotional song buttons on the homepage (positions 1-3 on left, 4-6 on right).
+                Manage 6 promotional song buttons displayed at the top center of the homepage.
               </p>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((position) => {
                   const song = featuredSongs.find(s => s.position === position);
                   const isEditing = editingFeaturedSong === position;
@@ -370,7 +386,7 @@ export default function Admin() {
                     <div key={position} className="border border-stone-200 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-bold text-stone-800">
-                          Position {position} {position <= 3 ? '(Left)' : '(Right)'}
+                          Slot {position}
                         </h3>
                         {!isEditing && (
                           <Button
@@ -411,11 +427,30 @@ export default function Admin() {
                             value={featuredSongData.artist_name}
                             onChange={(e) => setFeaturedSongData({...featuredSongData, artist_name: e.target.value})}
                           />
-                          <Input
-                            placeholder="Custom Thumbnail URL (optional)"
-                            value={featuredSongData.thumbnail_url}
-                            onChange={(e) => setFeaturedSongData({...featuredSongData, thumbnail_url: e.target.value})}
-                          />
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-stone-700 mb-2">
+                              Thumbnail Image
+                            </label>
+                            {featuredSongData.thumbnail_url && (
+                              <img 
+                                src={featuredSongData.thumbnail_url} 
+                                alt="Thumbnail preview" 
+                                className="w-20 h-20 rounded-full object-cover mb-2"
+                              />
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleThumbnailUpload}
+                              disabled={uploadingThumbnail}
+                              className="block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                            />
+                            {uploadingThumbnail && (
+                              <p className="text-xs text-stone-500 mt-1">Uploading...</p>
+                            )}
+                          </div>
+
                           <label className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -442,7 +477,7 @@ export default function Admin() {
                                 id: song?.id,
                                 data: featuredSongData
                               })}
-                              disabled={!featuredSongData.youtube_link || !featuredSongData.song_title}
+                              disabled={!featuredSongData.youtube_link || !featuredSongData.song_title || uploadingThumbnail}
                               className="bg-amber-600 hover:bg-amber-700"
                             >
                               <Save className="w-4 h-4 mr-1" />
@@ -452,6 +487,13 @@ export default function Admin() {
                         </div>
                       ) : song ? (
                         <div className="text-sm">
+                          {song.thumbnail_url && (
+                            <img 
+                              src={song.thumbnail_url} 
+                              alt={song.song_title}
+                              className="w-16 h-16 rounded-full object-cover mb-2"
+                            />
+                          )}
                           <p className="font-medium text-stone-800 mb-1">{song.song_title}</p>
                           {song.artist_name && (
                             <p className="text-stone-600 mb-1">{song.artist_name}</p>
