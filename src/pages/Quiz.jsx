@@ -117,6 +117,10 @@ export default function Quiz() {
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [quizResults, setQuizResults] = useState(null);
+  const [isLoadingQuestion, setIsLoadingQuestion] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
+  const [allQuestions, setAllQuestions] = useState([]);
 
   const queryClient = useQueryClient();
 
@@ -196,24 +200,36 @@ export default function Quiz() {
     setAnswers({});
     setQuizStartTime(Date.now());
     setShowResults(false);
+    setSelectedAnswer(null);
+    setIsLoadingQuestion(true);
 
     try {
-      let questions = [];
+      const questionCount = type === 'general' ? 20 : 5;
+      setTotalQuestionsCount(questionCount);
+      
+      // Generate first question
+      let firstQuestion;
       if (type === 'general') {
-        questions = await generateGeneralQuestions(20);
+        const result = await generateGeneralQuestions(1);
+        firstQuestion = result[0];
       } else if (type === 'book') {
-        questions = await generateBookQuestions(selectedBook, 10);
+        const result = await generateBookQuestions(selectedBook, 1);
+        firstQuestion = result[0];
       }
 
-      if (!questions || questions.length === 0) {
+      if (!firstQuestion) {
         alert('Failed to generate questions. Please try again.');
+        setIsLoadingQuestion(false);
         return;
       }
 
-      setCurrentQuiz(questions);
+      setCurrentQuiz([firstQuestion]);
+      setAllQuestions([firstQuestion]);
+      setIsLoadingQuestion(false);
     } catch (error) {
       alert('Failed to start quiz. Please try again.');
       console.error('Quiz generation error:', error);
+      setIsLoadingQuestion(false);
     }
   };
 
@@ -321,28 +337,65 @@ export default function Quiz() {
   };
 
   const handleAnswer = (option) => {
-    setAnswers({ ...answers, [currentQuestion]: option });
+    setSelectedAnswer(option);
   };
 
-  const nextQuestion = () => {
-    if (currentQuestion < currentQuiz.length - 1) {
+  const confirmAndNext = async () => {
+    if (!selectedAnswer) return;
+
+    // Save current answer
+    const updatedAnswers = { ...answers, [currentQuestion]: selectedAnswer };
+    setAnswers(updatedAnswers);
+    
+    // Check if this was the last question
+    if (currentQuestion >= totalQuestionsCount - 1) {
+      finishQuiz(updatedAnswers);
+      return;
+    }
+
+    // Load next question
+    setIsLoadingQuestion(true);
+    setSelectedAnswer(null);
+
+    try {
+      let nextQuestion;
+      if (quizType === 'general') {
+        const result = await generateGeneralQuestions(1);
+        nextQuestion = result[0];
+      } else if (quizType === 'book') {
+        const result = await generateBookQuestions(selectedBook, 1);
+        nextQuestion = result[0];
+      }
+
+      if (!nextQuestion) {
+        alert('Failed to load next question.');
+        setIsLoadingQuestion(false);
+        return;
+      }
+
+      const updatedAllQuestions = [...allQuestions, nextQuestion];
+      setAllQuestions(updatedAllQuestions);
+      setCurrentQuiz([nextQuestion]);
       setCurrentQuestion(currentQuestion + 1);
-    } else {
-      finishQuiz();
+      setIsLoadingQuestion(false);
+    } catch (error) {
+      alert('Failed to load next question.');
+      console.error('Question generation error:', error);
+      setIsLoadingQuestion(false);
     }
   };
 
-  const finishQuiz = async () => {
+  const finishQuiz = async (finalAnswers = answers) => {
     const completionTime = Math.floor((Date.now() - quizStartTime) / 1000);
     let correctCount = 0;
 
-    currentQuiz.forEach((q, idx) => {
-      if (answers[idx] === q.correct_answer) {
+    allQuestions.forEach((q, idx) => {
+      if (finalAnswers[idx] === q.correct_answer) {
         correctCount++;
       }
     });
 
-    const totalQuestions = currentQuiz.length;
+    const totalQuestions = allQuestions.length;
     const score = Math.round((correctCount / totalQuestions) * 100);
     const perfectScore = score === 100;
 
@@ -362,10 +415,10 @@ export default function Quiz() {
       quiz_type: quizType,
       book_name: selectedBook || null,
       chapter_number: selectedChapter || null,
-      questions: currentQuiz.map((q, idx) => ({
+      questions: allQuestions.map((q, idx) => ({
         ...q,
-        user_answer: answers[idx],
-        is_correct: answers[idx] === q.correct_answer
+        user_answer: finalAnswers[idx],
+        is_correct: finalAnswers[idx] === q.correct_answer
       })),
       score,
       total_questions: totalQuestions,
@@ -391,6 +444,10 @@ export default function Quiz() {
     setAnswers({});
     setShowResults(false);
     setQuizResults(null);
+    setSelectedAnswer(null);
+    setIsLoadingQuestion(false);
+    setAllQuestions([]);
+    setTotalQuestionsCount(0);
   };
 
   if (!user) {
@@ -493,8 +550,27 @@ export default function Quiz() {
   }
 
   if (currentQuiz) {
-    const question = currentQuiz[currentQuestion];
-    const progress = ((currentQuestion + 1) / currentQuiz.length) * 100;
+    if (isLoadingQuestion) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"
+            />
+            <p className="text-stone-600">Loading next question...</p>
+          </motion.div>
+        </div>
+      );
+    }
+
+    const question = currentQuiz[0];
+    const progress = ((currentQuestion + 1) / totalQuestionsCount) * 100;
 
     return (
       <div className="min-h-screen py-12 px-4">
@@ -502,7 +578,7 @@ export default function Quiz() {
           <div className="mb-8">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-stone-600">
-                Question {currentQuestion + 1} of {currentQuiz.length}
+                Question {currentQuestion + 1} of {totalQuestionsCount}
               </span>
               <span className="text-sm text-stone-600">
                 {Math.round(progress)}% Complete
@@ -525,9 +601,9 @@ export default function Quiz() {
               {Object.entries(question.options).map(([key, value]) => (
                 <Button
                   key={key}
-                  variant={answers[currentQuestion] === key ? 'default' : 'outline'}
+                  variant={selectedAnswer === key ? 'default' : 'outline'}
                   className={`w-full justify-start text-left h-auto py-4 px-6 ${
-                    answers[currentQuestion] === key ? 'bg-amber-600 hover:bg-amber-700' : ''
+                    selectedAnswer === key ? 'bg-amber-600 hover:bg-amber-700' : ''
                   }`}
                   onClick={() => handleAnswer(key)}
                 >
@@ -537,17 +613,17 @@ export default function Quiz() {
               ))}
 
               <Button
-                onClick={nextQuestion}
-                disabled={!answers[currentQuestion]}
+                onClick={confirmAndNext}
+                disabled={!selectedAnswer}
                 className="w-full mt-6 bg-stone-800 hover:bg-stone-900"
               >
-                {currentQuestion < currentQuiz.length - 1 ? (
+                {currentQuestion < totalQuestionsCount - 1 ? (
                   <>
-                    Next Question
+                    Confirm & Next Question
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </>
                 ) : (
-                  'Finish Quiz'
+                  'Confirm & Finish Quiz'
                 )}
               </Button>
             </CardContent>
@@ -608,7 +684,7 @@ export default function Quiz() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-stone-600 mb-4">
-                    10 questions about a specific Bible book
+                    5 questions about a specific Bible book
                   </p>
                   <Select value={selectedBook} onValueChange={setSelectedBook}>
                     <SelectTrigger>
