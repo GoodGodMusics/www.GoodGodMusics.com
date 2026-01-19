@@ -315,10 +315,26 @@ export default function Layout({ children, currentPageName }) {
             <div>
               <h3 className="font-serif text-lg font-bold mb-4 text-amber-200">Scripture</h3>
               <ul className="space-y-3 text-sm text-stone-400">
-                <li><a href="#" className="hover:text-amber-300 transition-colors">Old Testament</a></li>
-                <li><a href="#" className="hover:text-amber-300 transition-colors">New Testament</a></li>
-                <li><a href="#" className="hover:text-amber-300 transition-colors">Psalms & Hymns</a></li>
-                <li><a href="#" className="hover:text-amber-300 transition-colors">Gospels</a></li>
+                <li>
+                  <Link to={createPageUrl('TheBook')} className="hover:text-amber-300 transition-colors">
+                    Old Testament
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl('TheBook')} className="hover:text-amber-300 transition-colors">
+                    New Testament
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl('BibleTimeline')} className="hover:text-amber-300 transition-colors">
+                    Psalms & Hymns
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl('TheBook')} className="hover:text-amber-300 transition-colors">
+                    Gospels
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -331,8 +347,16 @@ export default function Layout({ children, currentPageName }) {
                     Contact Us
                   </Link>
                 </li>
-                <li><a href="#" className="hover:text-amber-300 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-amber-300 transition-colors">Terms of Service</a></li>
+                <li>
+                  <Link to={createPageUrl('About')} className="hover:text-amber-300 transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl('About')} className="hover:text-amber-300 transition-colors">
+                    Terms of Service
+                  </Link>
+                </li>
               </ul>
               <div className="mt-6">
                 <DonationButton variant="inline" size="sm" className="w-full justify-center" />
