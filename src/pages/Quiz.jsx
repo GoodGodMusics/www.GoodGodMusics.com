@@ -89,22 +89,42 @@ export default function Quiz() {
       return;
     }
 
+    if (type === 'book' && !selectedBook) {
+      alert('Please select a book first');
+      return;
+    }
+
+    if (type === 'chapter' && (!selectedBook || !selectedChapter)) {
+      alert('Please select both a book and chapter first');
+      return;
+    }
+
     setQuizType(type);
     setCurrentQuestion(0);
     setAnswers({});
     setQuizStartTime(Date.now());
     setShowResults(false);
 
-    let questions = [];
-    if (type === 'general') {
-      questions = await generateGeneralQuestions(20);
-    } else if (type === 'book' && selectedBook) {
-      questions = await generateBookQuestions(selectedBook, 20);
-    } else if (type === 'chapter' && selectedBook && selectedChapter) {
-      questions = await generateChapterQuestions(selectedBook, selectedChapter, 10);
-    }
+    try {
+      let questions = [];
+      if (type === 'general') {
+        questions = await generateGeneralQuestions(20);
+      } else if (type === 'book') {
+        questions = await generateBookQuestions(selectedBook, 20);
+      } else if (type === 'chapter') {
+        questions = await generateChapterQuestions(selectedBook, selectedChapter, 10);
+      }
 
-    setCurrentQuiz(questions);
+      if (!questions || questions.length === 0) {
+        alert('Failed to generate questions. Please try again.');
+        return;
+      }
+
+      setCurrentQuiz(questions);
+    } catch (error) {
+      alert('Failed to start quiz. Please try again.');
+      console.error('Quiz generation error:', error);
+    }
   };
 
   const generateGeneralQuestions = async (count) => {
@@ -540,7 +560,7 @@ export default function Quiz() {
                     </SelectContent>
                   </Select>
                   <Select 
-                    value={selectedChapter} 
+                    value={selectedChapter?.toString()} 
                     onValueChange={(val) => setSelectedChapter(parseInt(val))}
                     disabled={!selectedBook}
                   >

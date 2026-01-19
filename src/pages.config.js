@@ -7,11 +7,11 @@ import Contact from './pages/Contact';
 import Forums from './pages/Forums';
 import Home from './pages/Home';
 import Music from './pages/Music';
+import Quiz from './pages/Quiz';
+import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import Quiz from './pages/Quiz';
-import RewardCenter from './pages/RewardCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -25,11 +25,11 @@ export const PAGES = {
     "Forums": Forums,
     "Home": Home,
     "Music": Music,
+    "Quiz": Quiz,
+    "RewardCenter": RewardCenter,
     "Store": Store,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "Quiz": Quiz,
-    "RewardCenter": RewardCenter,
 }
 
 export const pagesConfig = {
