@@ -1,5 +1,6 @@
 import About from './pages/About';
 import Admin from './pages/Admin';
+import BibleStudyAI from './pages/BibleStudyAI';
 import BibleTimeline from './pages/BibleTimeline';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
@@ -10,13 +11,13 @@ import Music from './pages/Music';
 import Store from './pages/Store';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import BibleStudyAI from './pages/BibleStudyAI';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
     "Admin": Admin,
+    "BibleStudyAI": BibleStudyAI,
     "BibleTimeline": BibleTimeline,
     "Checkout": Checkout,
     "Contact": Contact,
@@ -27,7 +28,6 @@ export const PAGES = {
     "Store": Store,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "BibleStudyAI": BibleStudyAI,
 }
 
 export const pagesConfig = {

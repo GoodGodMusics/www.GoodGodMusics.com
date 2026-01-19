@@ -229,8 +229,8 @@ export default function About() {
             <div className="md:flex">
               <div className="md:w-1/3">
                 <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&crop=face"
-                  alt="Founder"
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696bc87ced3165f403f5ebd9/b7313f65c_image57.jpg"
+                  alt="Gregory Steele - Founder"
                   className="w-full h-64 md:h-full object-cover"
                 />
               </div>
@@ -238,13 +238,14 @@ export default function About() {
                 <div className="flex items-center gap-2 mb-2">
                   <Logo size="small" showText={false} />
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-stone-800 mb-1">GoodGodMusics</h3>
-                <p className="text-amber-700 mb-6">Founder & Curator</p>
+                <h3 className="text-2xl font-serif font-bold text-stone-800 mb-1">Gregory Steele</h3>
+                <p className="text-amber-700 mb-6">Founder & Curator, GoodGodMusics</p>
                 <p className="text-stone-600 leading-relaxed mb-6">
-                  With a deep love for Scripture and a passion for worship music, GoodGodMusics 
-                  founded Bible Harmony to share the transformative experience of connecting 
-                  God's Word with inspiring melodies. The vision is simple yet profound: help 
-                  believers around the world encounter Scripture in a fresh, musical way.
+                  An Air Force Veteran and devoted father, Gregory Steele founded GoodGodMusics 
+                  and Bible Harmony with a passionate mission to spread God's Word to his generation. 
+                  With deep love for Scripture and worship music, he created this platform to help 
+                  believers experience the transformative power of connecting biblical truth with 
+                  inspiring melodies.
                 </p>
                 <p className="text-stone-600 leading-relaxed">
                   "Music has always been a gateway to deeper spiritual experiences for me. 
