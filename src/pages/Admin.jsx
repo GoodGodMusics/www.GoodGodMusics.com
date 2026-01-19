@@ -196,17 +196,9 @@ export default function Admin() {
               <Radio className="w-4 h-4" />
               Featured Songs ({featuredSongs.length}/6)
             </TabsTrigger>
-            <TabsTrigger value="homepage" className="flex items-center gap-2">
-              <Home className="w-4 h-4" />
-              Homepage Theme Song
-            </TabsTrigger>
             <TabsTrigger value="chapters" className="flex items-center gap-2">
               <Music2 className="w-4 h-4" />
               Bible Chapters ({chapters.length})
-            </TabsTrigger>
-            <TabsTrigger value="comments" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Comments ({pendingComments.length} pending)
             </TabsTrigger>
           </TabsList>
 
@@ -361,99 +353,6 @@ export default function Admin() {
             </div>
           </TabsContent>
 
-          {/* Homepage Theme Song Tab */}
-          <TabsContent value="homepage">
-            <div className="bg-white rounded-3xl shadow-xl p-6">
-              <h2 className="text-2xl font-bold text-stone-800 mb-4">Homepage Theme Song</h2>
-              <p className="text-stone-600 mb-6">
-                Set a theme song that plays on the homepage to promote new releases and create engagement.
-              </p>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-stone-700 mb-2 block">
-                    YouTube URL <span className="text-red-600">*</span>
-                  </label>
-                  <Input
-                    value={themeData.theme_song_url}
-                    onChange={(e) => setThemeData({...themeData, theme_song_url: e.target.value})}
-                    placeholder="https://youtube.com/watch?v=..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-stone-700 mb-2 block">
-                      Song Title
-                    </label>
-                    <Input
-                      value={themeData.theme_song_title}
-                      onChange={(e) => setThemeData({...themeData, theme_song_title: e.target.value})}
-                      placeholder="Song name"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-stone-700 mb-2 block">
-                      Artist
-                    </label>
-                    <Input
-                      value={themeData.theme_song_artist}
-                      onChange={(e) => setThemeData({...themeData, theme_song_artist: e.target.value})}
-                      placeholder="Artist name"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={themeData.autoplay}
-                      onChange={(e) => setThemeData({...themeData, autoplay: e.target.checked})}
-                      className="w-4 h-4 text-amber-600 rounded"
-                    />
-                    <span className="text-sm text-stone-700">Auto-play on page load</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={themeData.is_active}
-                      onChange={(e) => setThemeData({...themeData, is_active: e.target.checked})}
-                      className="w-4 h-4 text-amber-600 rounded"
-                    />
-                    <span className="text-sm text-stone-700">Active (show on homepage)</span>
-                  </label>
-                </div>
-
-                <Button
-                  onClick={() => updateThemeSongMutation.mutate(themeData)}
-                  disabled={updateThemeSongMutation.isPending || !themeData.theme_song_url}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  {updateThemeSongMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Theme Song
-                    </>
-                  )}
-                </Button>
-
-                {updateThemeSongMutation.isSuccess && (
-                  <div className="flex items-center gap-2 text-green-600 text-sm">
-                    <Check className="w-4 h-4" />
-                    Theme song updated successfully!
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
           {/* Featured Songs Tab */}
           <TabsContent value="featured">
             <div className="bg-white rounded-3xl shadow-xl p-6">
@@ -576,115 +475,6 @@ export default function Admin() {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Comments Tab */}
-          <TabsContent value="comments">
-            <div className="space-y-6">
-              {/* Pending Comments */}
-              <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                <div className="bg-yellow-50 border-b border-yellow-100 p-4 flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  <h2 className="font-bold text-stone-800">Pending Approval ({pendingComments.length})</h2>
-                </div>
-                <div className="max-h-[400px] overflow-y-auto">
-                  {loadingComments ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
-                    </div>
-                  ) : pendingComments.length === 0 ? (
-                    <div className="text-center py-12 text-stone-500">
-                      No pending comments
-                    </div>
-                  ) : (
-                    pendingComments.map((comment) => (
-                      <div key={comment.id} className="p-6 border-b border-stone-100">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <p className="font-medium text-stone-800">{comment.user_name || 'Anonymous'}</p>
-                            <p className="text-sm text-stone-500">{comment.user_email}</p>
-                            {comment.page_reference && (
-                              <Badge variant="outline" className="mt-1 text-xs">
-                                {comment.page_reference}
-                              </Badge>
-                            )}
-                          </div>
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                            {comment.comment_type}
-                          </Badge>
-                        </div>
-                        <p className="text-stone-600 mb-4">{comment.message}</p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => updateCommentMutation.mutate({
-                              id: comment.id,
-                              data: { is_approved: true }
-                            })}
-                            disabled={updateCommentMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => deleteCommentMutation.mutate(comment.id)}
-                            disabled={deleteCommentMutation.isPending}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Approved Comments */}
-              <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                <div className="bg-green-50 border-b border-green-100 p-4 flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <h2 className="font-bold text-stone-800">Approved Comments ({approvedComments.length})</h2>
-                </div>
-                <div className="max-h-[400px] overflow-y-auto">
-                  {approvedComments.length === 0 ? (
-                    <div className="text-center py-12 text-stone-500">
-                      No approved comments yet
-                    </div>
-                  ) : (
-                    approvedComments.map((comment) => (
-                      <div key={comment.id} className="p-6 border-b border-stone-100">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <p className="font-medium text-stone-800">{comment.user_name || 'Anonymous'}</p>
-                            <p className="text-sm text-stone-500">
-                              {new Date(comment.created_date).toLocaleDateString()}
-                            </p>
-                            {comment.page_reference && (
-                              <Badge variant="outline" className="mt-1 text-xs">
-                                {comment.page_reference}
-                              </Badge>
-                            )}
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteCommentMutation.mutate(comment.id)}
-                            disabled={deleteCommentMutation.isPending}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <p className="text-stone-600">{comment.message}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
               </div>
             </div>
           </TabsContent>
