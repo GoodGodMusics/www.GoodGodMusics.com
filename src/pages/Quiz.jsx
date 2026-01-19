@@ -121,6 +121,8 @@ export default function Quiz() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [allQuestions, setAllQuestions] = useState([]);
+  const [shuffleQuestions, setShuffleQuestions] = useState(false);
+  const [viewingAttempt, setViewingAttempt] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -179,6 +181,15 @@ export default function Quiz() {
     }
   });
 
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const startQuiz = async (type) => {
     if (!user) {
       alert('Please log in to take a quiz');
@@ -202,6 +213,7 @@ export default function Quiz() {
     setShowResults(false);
     setSelectedAnswer(null);
     setIsLoadingQuestion(true);
+    setViewingAttempt(null);
 
     try {
       const questionCount = type === 'general' ? 20 : 5;
@@ -223,8 +235,9 @@ export default function Quiz() {
         return;
       }
 
-      setCurrentQuiz([firstQuestion]);
-      setAllQuestions([firstQuestion]);
+      const questionsToUse = shuffleQuestions ? [firstQuestion] : [firstQuestion];
+      setCurrentQuiz(questionsToUse);
+      setAllQuestions(questionsToUse);
       setIsLoadingQuestion(false);
     } catch (error) {
       alert('Failed to start quiz. Please try again.');
@@ -404,7 +417,15 @@ export default function Quiz() {
       correctCount,
       totalQuestions,
       perfectScore,
-      completionTime
+      completionTime,
+      quizType,
+      selectedBook,
+      selectedChapter,
+      questionsWithAnswers: allQuestions.map((q, idx) => ({
+        ...q,
+        user_answer: finalAnswers[idx],
+        is_correct: finalAnswers[idx] === q.correct_answer
+      }))
     };
 
     setQuizResults(results);
@@ -448,7 +469,125 @@ export default function Quiz() {
     setIsLoadingQuestion(false);
     setAllQuestions([]);
     setTotalQuestionsCount(0);
+    setViewingAttempt(null);
   };
+
+  const retakeQuiz = () => {
+    const type = quizResults?.quizType || quizType;
+    setShowResults(false);
+    setQuizResults(null);
+    startQuiz(type);
+  };
+
+  const viewAttemptDetails = (attempt) => {
+    setViewingAttempt(attempt);
+  };
+
+  const closeAttemptDetails = () => {
+    setViewingAttempt(null);
+  };
+
+  if (viewingAttempt) {
+    return (
+      <div className="min-h-screen py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Button onClick={closeAttemptDetails} variant="outline" className="mb-6">
+            ← Back to Quiz History
+          </Button>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Quiz Results - {viewingAttempt.score}%</span>
+                <Badge variant={viewingAttempt.reward_earned ? 'default' : 'outline'}>
+                  {viewingAttempt.quiz_type === 'general' ? 'General Quiz' :
+                   `${viewingAttempt.book_name}${viewingAttempt.chapter_number ? ` ${viewingAttempt.chapter_number}` : ''}`}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-amber-600">{viewingAttempt.score}%</div>
+                  <div className="text-sm text-stone-600">Score</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{viewingAttempt.correct_answers}</div>
+                  <div className="text-sm text-stone-600">Correct</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-red-600">
+                    {viewingAttempt.total_questions - viewingAttempt.correct_answers}
+                  </div>
+                  <div className="text-sm text-stone-600">Incorrect</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{viewingAttempt.completion_time_seconds}s</div>
+                  <div className="text-sm text-stone-600">Time</div>
+                </div>
+              </div>
+              <p className="text-sm text-stone-500">
+                Taken on {new Date(viewingAttempt.created_date).toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-stone-800 mb-4">Question Review</h2>
+            {viewingAttempt.questions?.map((q, idx) => (
+              <Card key={idx} className={q.is_correct ? 'border-green-200' : 'border-red-200'}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-start gap-3">
+                    <span className="flex-shrink-0">
+                      {q.is_correct ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-600" />
+                      )}
+                    </span>
+                    <span>Question {idx + 1}: {q.question}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid gap-2">
+                    {Object.entries(q.options).map(([key, value]) => {
+                      const isCorrect = key === q.correct_answer;
+                      const isUserAnswer = key === q.user_answer;
+                      
+                      return (
+                        <div
+                          key={key}
+                          className={`p-3 rounded-lg border-2 ${
+                            isCorrect ? 'bg-green-50 border-green-300' :
+                            isUserAnswer && !isCorrect ? 'bg-red-50 border-red-300' :
+                            'bg-stone-50 border-stone-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{key}.</span>
+                            <span>{value}</span>
+                            {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-600 ml-auto" />}
+                            {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-600 ml-auto" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {q.explanation && (
+                    <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                      <p className="text-sm font-medium text-blue-900 mb-1">Explanation:</p>
+                      <p className="text-sm text-blue-800">{q.explanation}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -530,14 +669,31 @@ export default function Quiz() {
                   </motion.div>
                 )}
 
+                <div className="mb-6">
+                  <Button 
+                    onClick={() => setViewingAttempt({ 
+                      ...quizResults, 
+                      questions: quizResults.questionsWithAnswers,
+                      created_date: new Date().toISOString()
+                    })}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    View Detailed Results
+                  </Button>
+                </div>
+
                 <div className="flex gap-4 justify-center">
+                  <Button onClick={retakeQuiz} variant="outline">
+                    Retake This Quiz
+                  </Button>
                   <Button onClick={resetQuiz} variant="outline">
-                    Take Another Quiz
+                    Different Quiz
                   </Button>
                   <Link to={createPageUrl('RewardCenter')}>
                     <Button className="bg-amber-600 hover:bg-amber-700">
                       <Gift className="w-4 h-4 mr-2" />
-                      Reward Center ({tokens.length} tokens)
+                      Rewards ({tokens.length})
                     </Button>
                   </Link>
                 </div>
@@ -658,6 +814,20 @@ export default function Quiz() {
           </TabsList>
 
           <TabsContent value="quiz" className="space-y-6">
+            <div className="flex justify-center mb-6">
+              <label className="flex items-center gap-2 cursor-pointer p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <input
+                  type="checkbox"
+                  checked={shuffleQuestions}
+                  onChange={(e) => setShuffleQuestions(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded"
+                />
+                <span className="text-sm font-medium text-amber-900">
+                  🔀 Shuffle questions randomly
+                </span>
+              </label>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
@@ -726,28 +896,38 @@ export default function Quiz() {
                 </Card>
               ) : (
                 attempts.map((attempt) => (
-                  <Card key={attempt.id}>
-                    <CardContent className="flex items-center justify-between p-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge variant={attempt.reward_earned ? 'default' : 'outline'}>
-                            {attempt.quiz_type === 'general' ? 'General' :
-                             attempt.quiz_type === 'book' ? `Book: ${attempt.book_name}` :
-                             `${attempt.book_name} ${attempt.chapter_number}`}
-                          </Badge>
-                          {attempt.reward_earned && (
-                            <Trophy className="w-5 h-5 text-amber-600" />
-                          )}
+                  <Card key={attempt.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Badge variant={attempt.reward_earned ? 'default' : 'outline'}>
+                              {attempt.quiz_type === 'general' ? 'General' :
+                               attempt.quiz_type === 'book' ? `Book: ${attempt.book_name}` :
+                               `${attempt.book_name} ${attempt.chapter_number}`}
+                            </Badge>
+                            {attempt.reward_earned && (
+                              <Trophy className="w-5 h-5 text-amber-600" />
+                            )}
+                          </div>
+                          <div className="text-sm text-stone-600">
+                            {new Date(attempt.created_date).toLocaleDateString()} • 
+                            {attempt.correct_answers}/{attempt.total_questions} correct • 
+                            {attempt.completion_time_seconds}s
+                          </div>
                         </div>
-                        <div className="text-sm text-stone-600">
-                          {new Date(attempt.created_date).toLocaleDateString()} • 
-                          {attempt.correct_answers}/{attempt.total_questions} correct • 
-                          {attempt.completion_time_seconds}s
+                        <div className="text-3xl font-bold text-amber-600">
+                          {attempt.score}%
                         </div>
                       </div>
-                      <div className="text-3xl font-bold text-amber-600">
-                        {attempt.score}%
-                      </div>
+                      <Button 
+                        onClick={() => viewAttemptDetails(attempt)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        View Details & Explanations
+                      </Button>
                     </CardContent>
                   </Card>
                 ))
