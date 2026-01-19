@@ -71,10 +71,10 @@ export default function FeaturedSongButtons() {
   if (featuredSongs.length === 0) return null;
 
   return (
-    <div className="fixed top-1/2 -translate-y-1/2 left-0 right-0 pointer-events-none z-30">
+    <div className="fixed top-32 left-0 right-0 pointer-events-none z-30">
       {/* Left side buttons */}
       {leftSongs.length > 0 && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-6 pointer-events-auto">
+        <div className="absolute left-4 top-0 flex flex-col gap-6 pointer-events-auto">
           {leftSongs.map((song, index) => (
             <SongButton key={song.id} song={song} index={index} side="left" />
           ))}
@@ -83,7 +83,7 @@ export default function FeaturedSongButtons() {
 
       {/* Right side buttons */}
       {rightSongs.length > 0 && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-6 pointer-events-auto">
+        <div className="absolute right-4 top-0 flex flex-col gap-6 pointer-events-auto">
           {rightSongs.map((song, index) => (
             <SongButton key={song.id} song={song} index={index} side="right" />
           ))}

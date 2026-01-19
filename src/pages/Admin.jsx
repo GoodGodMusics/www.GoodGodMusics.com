@@ -190,8 +190,16 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs defaultValue="chapters" className="w-full">
+        <Tabs defaultValue="featured" className="w-full">
           <TabsList className="mb-6">
+            <TabsTrigger value="featured" className="flex items-center gap-2">
+              <Radio className="w-4 h-4" />
+              Featured Songs ({featuredSongs.length}/6)
+            </TabsTrigger>
+            <TabsTrigger value="homepage" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Homepage Theme Song
+            </TabsTrigger>
             <TabsTrigger value="chapters" className="flex items-center gap-2">
               <Music2 className="w-4 h-4" />
               Bible Chapters ({chapters.length})
@@ -199,14 +207,6 @@ export default function Admin() {
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               Comments ({pendingComments.length} pending)
-            </TabsTrigger>
-            <TabsTrigger value="homepage" className="flex items-center gap-2">
-              <Home className="w-4 h-4" />
-              Homepage Theme Song
-            </TabsTrigger>
-            <TabsTrigger value="featured" className="flex items-center gap-2">
-              <Radio className="w-4 h-4" />
-              Featured Songs ({featuredSongs.length}/6)
             </TabsTrigger>
           </TabsList>
 
