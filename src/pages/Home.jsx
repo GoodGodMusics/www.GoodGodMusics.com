@@ -12,6 +12,7 @@ import { base44 } from '@/api/base44Client';
 import HeroSection from '@/components/ui-custom/HeroSection';
 import CommentSection from '@/components/comments/CommentSection';
 import ThemeSongPlayer from '@/components/homepage/ThemeSongPlayer';
+import FeaturedSongButtons from '@/components/homepage/FeaturedSongButtons';
 
 export default function Home() {
   // Fetch featured chapters with music
@@ -76,6 +77,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* Featured Song Buttons */}
+      <FeaturedSongButtons />
+
       {/* Theme Song Player */}
       {homepageSettings?.is_active && homepageSettings?.theme_song_url && (
         <ThemeSongPlayer

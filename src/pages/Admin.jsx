@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare, Home
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,12 @@ export default function Admin() {
     enabled: user?.role === 'admin'
   });
 
+  const { data: featuredSongs = [] } = useQuery({
+    queryKey: ['adminFeaturedSongs'],
+    queryFn: () => base44.entities.FeaturedSong.list('position', 10),
+    enabled: user?.role === 'admin'
+  });
+
   const [themeData, setThemeData] = useState({
     theme_song_url: '',
     theme_song_title: '',
@@ -64,6 +70,9 @@ export default function Admin() {
     autoplay: false,
     is_active: true
   });
+
+  const [editingFeaturedSong, setEditingFeaturedSong] = useState(null);
+  const [featuredSongData, setFeaturedSongData] = useState({});
 
   useEffect(() => {
     if (homepageSettings) {
@@ -113,6 +122,22 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homepageSettings'] });
+    }
+  });
+
+  const updateFeaturedSongMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      if (id) {
+        return base44.entities.FeaturedSong.update(id, data);
+      } else {
+        return base44.entities.FeaturedSong.create(data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminFeaturedSongs'] });
+      queryClient.invalidateQueries({ queryKey: ['featuredSongs'] });
+      setEditingFeaturedSong(null);
+      setFeaturedSongData({});
     }
   });
 
@@ -178,6 +203,10 @@ export default function Admin() {
             <TabsTrigger value="homepage" className="flex items-center gap-2">
               <Home className="w-4 h-4" />
               Homepage Theme Song
+            </TabsTrigger>
+            <TabsTrigger value="featured" className="flex items-center gap-2">
+              <Radio className="w-4 h-4" />
+              Featured Songs ({featuredSongs.length}/6)
             </TabsTrigger>
           </TabsList>
 
@@ -421,6 +450,132 @@ export default function Admin() {
                     Theme song updated successfully!
                   </div>
                 )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Featured Songs Tab */}
+          <TabsContent value="featured">
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-stone-800 mb-2">Featured Song Buttons</h2>
+              <p className="text-stone-600 mb-6">
+                Manage 6 promotional song buttons on the homepage (positions 1-3 on left, 4-6 on right).
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((position) => {
+                  const song = featuredSongs.find(s => s.position === position);
+                  const isEditing = editingFeaturedSong === position;
+
+                  return (
+                    <div key={position} className="border border-stone-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-stone-800">
+                          Position {position} {position <= 3 ? '(Left)' : '(Right)'}
+                        </h3>
+                        {!isEditing && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingFeaturedSong(position);
+                              setFeaturedSongData({
+                                position,
+                                youtube_link: song?.youtube_link || '',
+                                song_title: song?.song_title || '',
+                                artist_name: song?.artist_name || '',
+                                thumbnail_url: song?.thumbnail_url || '',
+                                is_active: song?.is_active !== false
+                              });
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            {song ? 'Edit' : 'Add'}
+                          </Button>
+                        )}
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <Input
+                            placeholder="YouTube URL *"
+                            value={featuredSongData.youtube_link}
+                            onChange={(e) => setFeaturedSongData({...featuredSongData, youtube_link: e.target.value})}
+                          />
+                          <Input
+                            placeholder="Song Title *"
+                            value={featuredSongData.song_title}
+                            onChange={(e) => setFeaturedSongData({...featuredSongData, song_title: e.target.value})}
+                          />
+                          <Input
+                            placeholder="Artist Name"
+                            value={featuredSongData.artist_name}
+                            onChange={(e) => setFeaturedSongData({...featuredSongData, artist_name: e.target.value})}
+                          />
+                          <Input
+                            placeholder="Custom Thumbnail URL (optional)"
+                            value={featuredSongData.thumbnail_url}
+                            onChange={(e) => setFeaturedSongData({...featuredSongData, thumbnail_url: e.target.value})}
+                          />
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={featuredSongData.is_active}
+                              onChange={(e) => setFeaturedSongData({...featuredSongData, is_active: e.target.checked})}
+                              className="w-4 h-4 text-amber-600 rounded"
+                            />
+                            <span className="text-sm">Active</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingFeaturedSong(null);
+                                setFeaturedSongData({});
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => updateFeaturedSongMutation.mutate({
+                                id: song?.id,
+                                data: featuredSongData
+                              })}
+                              disabled={!featuredSongData.youtube_link || !featuredSongData.song_title}
+                              className="bg-amber-600 hover:bg-amber-700"
+                            >
+                              <Save className="w-4 h-4 mr-1" />
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : song ? (
+                        <div className="text-sm">
+                          <p className="font-medium text-stone-800 mb-1">{song.song_title}</p>
+                          {song.artist_name && (
+                            <p className="text-stone-600 mb-1">{song.artist_name}</p>
+                          )}
+                          <a 
+                            href={song.youtube_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-600 hover:underline text-xs flex items-center gap-1"
+                          >
+                            <Link2 className="w-3 h-3" />
+                            YouTube Link
+                          </a>
+                          {!song.is_active && (
+                            <Badge className="mt-2 bg-stone-200 text-stone-600">Inactive</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-stone-400 text-sm">Empty slot</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
