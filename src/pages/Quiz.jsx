@@ -9,10 +9,102 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Trophy, Award, Clock, ChevronRight, 
-  CheckCircle2, XCircle, Star, Gift
+  CheckCircle2, XCircle, Star, Gift, Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+
+function RewardMemeGallery({ userEmail }) {
+  const { data: redeemedTokens = [] } = useQuery({
+    queryKey: ['redeemedTokens', userEmail],
+    queryFn: async () => {
+      const tokens = await base44.entities.RewardToken.filter({ 
+        user_email: userEmail, 
+        is_redeemed: true 
+      }, '-redeemed_date');
+      return tokens;
+    },
+    enabled: !!userEmail
+  });
+
+  const { data: memes = [] } = useQuery({
+    queryKey: ['rewardMemes', userEmail],
+    queryFn: async () => {
+      const memeIds = redeemedTokens.map(t => t.redeemed_for_meme_id).filter(Boolean);
+      if (memeIds.length === 0) return [];
+      const allMemes = await base44.entities.ChristianMeme.list('-created_date');
+      return allMemes.filter(m => memeIds.includes(m.id));
+    },
+    enabled: redeemedTokens.length > 0
+  });
+
+  const downloadMeme = async (meme) => {
+    try {
+      const response = await fetch(meme.image_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scripture-meme-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      alert('Failed to download meme');
+    }
+  };
+
+  if (memes.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <Gift className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+          <p className="text-stone-600 mb-2">No memes earned yet</p>
+          <p className="text-sm text-stone-500">
+            Score 100% on quizzes to earn reward tokens, then redeem them in the Reward Center!
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {memes.map((meme) => (
+        <motion.div
+          key={meme.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="group"
+        >
+          <div className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+            <img
+              src={meme.image_url}
+              alt={meme.caption}
+              className="w-full h-64 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <Button
+                  onClick={() => downloadMeme(meme)}
+                  size="sm"
+                  className="w-full bg-white text-stone-800 hover:bg-stone-100"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 text-sm text-stone-600 line-clamp-2">
+            {meme.caption}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
 
 export default function Quiz() {
   const [user, setUser] = useState(null);
@@ -110,9 +202,7 @@ export default function Quiz() {
       if (type === 'general') {
         questions = await generateGeneralQuestions(20);
       } else if (type === 'book') {
-        questions = await generateBookQuestions(selectedBook, 20);
-      } else if (type === 'chapter') {
-        questions = await generateChapterQuestions(selectedBook, selectedChapter, 10);
+        questions = await generateBookQuestions(selectedBook, 10);
       }
 
       if (!questions || questions.length === 0) {
@@ -492,7 +582,7 @@ export default function Quiz() {
           </TabsList>
 
           <TabsContent value="quiz" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                   <BookOpen className="w-12 h-12 text-amber-600 mb-3" />
@@ -518,7 +608,7 @@ export default function Quiz() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-stone-600 mb-4">
-                    20 questions about a specific Bible book
+                    10 questions about a specific Bible book
                   </p>
                   <Select value={selectedBook} onValueChange={setSelectedBook}>
                     <SelectTrigger>
@@ -539,49 +629,13 @@ export default function Quiz() {
                   </Button>
                 </CardContent>
               </Card>
+            </div>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <Trophy className="w-12 h-12 text-green-600 mb-3" />
-                  <CardTitle>Chapter Quiz</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-stone-600 mb-4">
-                    10 questions about a specific chapter
-                  </p>
-                  <Select value={selectedBook} onValueChange={setSelectedBook}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a book" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bibleBooks.map(book => (
-                        <SelectItem key={book} value={book}>{book}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select 
-                    value={selectedChapter?.toString()} 
-                    onValueChange={(val) => setSelectedChapter(parseInt(val))}
-                    disabled={!selectedBook}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Chapter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 50 }, (_, i) => i + 1).map(num => (
-                        <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button 
-                    onClick={() => startQuiz('chapter')}
-                    disabled={!selectedBook || !selectedChapter}
-                    className="w-full mt-3 bg-green-600 hover:bg-green-700"
-                  >
-                    Start Quiz
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="mt-12">
+              <h2 className="text-2xl font-serif font-bold text-stone-800 text-center mb-6">
+                Earned Rewards
+              </h2>
+              <RewardMemeGallery userEmail={user?.email} />
             </div>
           </TabsContent>
 
