@@ -207,6 +207,16 @@ export default function UserProfile() {
           </Card>
         </motion.div>
 
+        {/* AI-Powered Personalized Motivation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-8"
+        >
+          <GrokEnhancedContent user={user} />
+        </motion.div>
+
         {/* Main Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
