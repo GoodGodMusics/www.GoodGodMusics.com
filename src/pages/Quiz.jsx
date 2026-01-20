@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Trophy, Award, Clock, ChevronRight, 
-  CheckCircle2, XCircle, Star, Gift, Download
+  CheckCircle2, XCircle, Star, Gift, Download, Swords
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import QuizOffChallenge from '@/components/quiz/QuizOffChallenge';
 
 function RewardMemeGallery({ userEmail }) {
   const { data: redeemedTokens = [] } = useQuery({
@@ -123,6 +124,11 @@ export default function Quiz() {
   const [allQuestions, setAllQuestions] = useState([]);
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [viewingAttempt, setViewingAttempt] = useState(null);
+  const [difficulty, setDifficulty] = useState('medium');
+  const [category, setCategory] = useState('general');
+  const [timeLimit, setTimeLimit] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [askedQuestions, setAskedQuestions] = useState([]);
 
   const queryClient = useQueryClient();
 
@@ -247,11 +253,22 @@ export default function Quiz() {
   };
 
   const generateGeneralQuestions = async (count) => {
+    const difficultyPrompt = difficulty === 'easy' 
+      ? 'Make questions straightforward and suitable for beginners.'
+      : difficulty === 'hard'
+      ? 'Make questions very challenging with specific biblical details.'
+      : 'Make questions moderately challenging but fair.';
+
+    const avoidQuestionsPrompt = askedQuestions.length > 0
+      ? `IMPORTANT: Do NOT repeat or create similar questions to these already asked: ${askedQuestions.map(q => q.question).join('; ')}. Generate completely different questions.`
+      : '';
+
     const response = await base44.integrations.Core.InvokeLLM({
       prompt: `Generate ${count} diverse multiple choice Bible trivia questions covering both Old and New Testament. 
+      ${difficultyPrompt}
+      ${avoidQuestionsPrompt}
       Each question should have 4 options (A, B, C, D) with only one correct answer.
-      Cover various topics: people, events, teachings, books, prophecies, miracles, parables, etc.
-      Make questions challenging but fair.`,
+      Cover various topics: people, events, teachings, books, prophecies, miracles, parables, etc.`,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -434,6 +451,8 @@ export default function Quiz() {
     const attemptData = {
       user_email: user.email,
       quiz_type: quizType,
+      difficulty_level: difficulty,
+      category: category,
       book_name: selectedBook || null,
       chapter_number: selectedChapter || null,
       questions: allQuestions.map((q, idx) => ({
@@ -445,7 +464,8 @@ export default function Quiz() {
       total_questions: totalQuestions,
       correct_answers: correctCount,
       reward_earned: perfectScore,
-      completion_time_seconds: completionTime
+      completion_time_seconds: completionTime,
+      time_limit_seconds: timeLimit
     };
 
     const attempt = await createAttemptMutation.mutateAsync(attemptData);
@@ -454,6 +474,27 @@ export default function Quiz() {
       await createTokenMutation.mutateAsync({
         user_email: user.email,
         earned_from_quiz_id: attempt.id
+      });
+
+      // Award badges
+      const badgeData = {
+        user_email: user.email,
+        badge_type: 'perfect_score',
+        badge_name: '💯 Perfect Score',
+        badge_description: `Achieved 100% on a ${difficulty} ${quizType} quiz`,
+        rarity: difficulty === 'hard' ? 'epic' : difficulty === 'medium' ? 'rare' : 'common'
+      };
+      await base44.entities.Badge.create(badgeData);
+    }
+
+    // Speed badge if completed in under 30 seconds total
+    if (completionTime < 30 && totalQuestions >= 5) {
+      await base44.entities.Badge.create({
+        user_email: user.email,
+        badge_type: 'speed_demon',
+        badge_name: '⚡ Speed Demon',
+        badge_description: 'Completed quiz in under 30 seconds',
+        rarity: 'rare'
       });
     }
   };
@@ -808,24 +849,59 @@ export default function Quiz() {
         </div>
 
         <Tabs defaultValue="quiz" className="mb-12">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
             <TabsTrigger value="quiz">Take Quiz</TabsTrigger>
-            <TabsTrigger value="history">Quiz History</TabsTrigger>
+            <TabsTrigger value="challenge">
+              <Swords className="w-4 h-4 mr-1" />
+              Quiz Off
+            </TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="quiz" className="space-y-6">
-            <div className="flex justify-center mb-6">
-              <label className="flex items-center gap-2 cursor-pointer p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <input
-                  type="checkbox"
-                  checked={shuffleQuestions}
-                  onChange={(e) => setShuffleQuestions(e.target.checked)}
-                  className="w-4 h-4 text-amber-600 rounded"
-                />
-                <span className="text-sm font-medium text-amber-900">
-                  🔀 Shuffle questions randomly
-                </span>
-              </label>
+            <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Difficulty</label>
+                <Select value={difficulty} onValueChange={setDifficulty}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">🟢 Easy</SelectItem>
+                    <SelectItem value="medium">🟡 Medium</SelectItem>
+                    <SelectItem value="hard">🔴 Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Category</label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="old_testament">Old Testament</SelectItem>
+                    <SelectItem value="new_testament">New Testament</SelectItem>
+                    <SelectItem value="gospels">Gospels</SelectItem>
+                    <SelectItem value="parables">Parables</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Time Limit</label>
+                <Select value={timeLimit?.toString() || 'none'} onValueChange={(v) => setTimeLimit(v === 'none' ? null : parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Limit</SelectItem>
+                    <SelectItem value="180">3 minutes</SelectItem>
+                    <SelectItem value="300">5 minutes</SelectItem>
+                    <SelectItem value="600">10 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -883,6 +959,10 @@ export default function Quiz() {
               </h2>
               <RewardMemeGallery userEmail={user?.email} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="challenge">
+            <QuizOffChallenge user={user} />
           </TabsContent>
 
           <TabsContent value="history">
