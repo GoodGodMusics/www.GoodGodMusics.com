@@ -477,10 +477,14 @@ export default function Admin() {
                                 id: song?.id,
                                 data: featuredSongData
                               })}
-                              disabled={!featuredSongData.youtube_link || !featuredSongData.song_title || uploadingThumbnail}
+                              disabled={!featuredSongData.youtube_link || !featuredSongData.song_title || uploadingThumbnail || updateFeaturedSongMutation.isPending}
                               className="bg-amber-600 hover:bg-amber-700"
                             >
-                              <Save className="w-4 h-4 mr-1" />
+                              {updateFeaturedSongMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-1" />
+                              )}
                               Save
                             </Button>
                           </div>
