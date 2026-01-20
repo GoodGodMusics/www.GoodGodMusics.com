@@ -16,6 +16,7 @@ import PlaylistManager from '@/components/playlists/PlaylistManager';
 import FriendManager from '@/components/friends/FriendManager';
 import DirectMessaging from '@/components/friends/DirectMessaging';
 import BadgeDisplay from '@/components/badges/BadgeDisplay';
+import GrokEnhancedContent from '@/components/ai/GrokEnhancedContent';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 

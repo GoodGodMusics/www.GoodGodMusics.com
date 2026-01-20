@@ -16,26 +16,66 @@ export default function ChristianMemeGallery() {
     queryFn: () => base44.entities.ChristianMeme.list('-created_date', 20)
   });
 
-  const generateMemeMutation = useMutation({
-    mutationFn: async () => {
-      const themes = ['faith', 'prayer', 'grace', 'love', 'hope', 'worship', 'joy', 'peace'];
-      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
-
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Create a wholesome Christian meme concept about ${randomTheme}. The meme should be uplifting, funny, and relatable to modern Christian life. Provide a caption and a brief image description.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            caption: { type: "string" },
-            image_description: { type: "string" },
-            bible_reference: { type: "string" }
-          }
-        }
+  // Grok API helper for enhanced meme generation
+  const callGrokAPI = async (prompt) => {
+    try {
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GROK_API_KEY}`
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are Grok, creating wholesome, funny Christian memes. Always respond with valid JSON only.' },
+            { role: 'user', content: prompt }
+          ],
+          model: 'grok-beta',
+          temperature: 1.0
+        })
       });
 
-      // Generate the meme image
+      const data = await response.json();
+      return JSON.parse(data.choices[0].message.content);
+    } catch (error) {
+      console.error('Grok API Error:', error);
+      return null;
+    }
+  };
+
+  const generateMemeMutation = useMutation({
+    mutationFn: async () => {
+      const themes = ['faith', 'prayer', 'grace', 'love', 'hope', 'worship', 'joy', 'peace', 'miracles', 'blessings'];
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+
+      // Try Grok for creative, humorous content
+      let result = await callGrokAPI(
+        `Create a wholesome, funny Christian meme about ${randomTheme}. Make it relatable to modern Christian life with gentle humor.
+        
+Return JSON with:
+- "caption": Funny, wholesome caption
+- "image_description": Detailed meme image description
+- "bible_reference": Relevant Bible verse (optional)`
+      );
+
+      // Fallback to Core.InvokeLLM
+      if (!result) {
+        result = await base44.integrations.Core.InvokeLLM({
+          prompt: `Create a wholesome Christian meme concept about ${randomTheme}. The meme should be uplifting, funny, and relatable to modern Christian life. Provide a caption and a brief image description.`,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              caption: { type: "string" },
+              image_description: { type: "string" },
+              bible_reference: { type: "string" }
+            }
+          }
+        });
+      }
+
+      // Generate the meme image with enhanced prompt
       const imageResult = await base44.integrations.Core.GenerateImage({
-        prompt: `Christian meme style image: ${result.image_description}. Wholesome, clean, family-friendly, text overlay ready. Style: modern meme format, clear composition.`
+        prompt: `Christian meme style image: ${result.image_description}. Wholesome, clean, family-friendly, visually engaging. Style: modern meme format, clear composition, vibrant colors, professional quality.`
       });
 
       // Save to database
