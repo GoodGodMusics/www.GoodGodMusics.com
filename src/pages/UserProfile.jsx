@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Music2, BookOpen, MessageSquare, Settings, Heart, Play, Clock, Mail, Bell, BellOff, Award, Brain } from 'lucide-react';
+import { User, Music2, BookOpen, MessageSquare, Settings, Heart, Play, Clock, Mail, Bell, BellOff, Award, Brain, Users, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +13,16 @@ import { base44 } from '@/api/base44Client';
 import { Separator } from '@/components/ui/separator';
 import CharityStore from '@/components/quiz/CharityStore';
 import PlaylistManager from '@/components/playlists/PlaylistManager';
+import FriendManager from '@/components/friends/FriendManager';
+import DirectMessaging from '@/components/friends/DirectMessaging';
+import BadgeDisplay from '@/components/badges/BadgeDisplay';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedFriend, setSelectedFriend] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -141,6 +145,7 @@ export default function UserProfile() {
               </motion.div>
             )}
           </div>
+          <BadgeDisplay user={user} compact={true} />
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-stone-800 mb-2">
             {user?.full_name || 'User Profile'}
           </h1>
@@ -208,10 +213,18 @@ export default function UserProfile() {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="quizzes" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
               <TabsTrigger value="playlists" className="rounded-lg">
                 <Music2 className="w-4 h-4 mr-2" />
                 Playlists
+              </TabsTrigger>
+              <TabsTrigger value="badges" className="rounded-lg">
+                <Trophy className="w-4 h-4 mr-2" />
+                Badges
+              </TabsTrigger>
+              <TabsTrigger value="friends" className="rounded-lg">
+                <Users className="w-4 h-4 mr-2" />
+                Friends
               </TabsTrigger>
               <TabsTrigger value="quizzes" className="rounded-lg">
                 <Brain className="w-4 h-4 mr-2" />
@@ -250,6 +263,23 @@ export default function UserProfile() {
                   <PlaylistManager userEmail={user?.email} />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Badges Tab */}
+            <TabsContent value="badges">
+              <BadgeDisplay user={user} />
+            </TabsContent>
+
+            {/* Friends Tab */}
+            <TabsContent value="friends">
+              <div className="grid md:grid-cols-2 gap-6">
+                <FriendManager user={user} onMessageClick={setSelectedFriend} />
+                <DirectMessaging 
+                  user={user} 
+                  selectedFriend={selectedFriend}
+                  onClose={() => setSelectedFriend(null)}
+                />
+              </div>
             </TabsContent>
 
             {/* Quizzes Tab */}
