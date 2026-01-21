@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Send, Sparkles, BookOpen, Target, HelpCircle, FileText, Loader2 } from 'lucide-react';
+import { Bot, Send, Sparkles, BookOpen, Target, HelpCircle, FileText, Loader2, Copy, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ export default function BibleStudyAI() {
   const [conversation, setConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -90,6 +91,16 @@ export default function BibleStudyAI() {
   const clearConversation = () => {
     setConversation([]);
     setUserInput('');
+  };
+
+  const copyToClipboard = async (text, index) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   const currentMode = modes[activeMode];
@@ -173,7 +184,29 @@ export default function BibleStudyAI() {
                               {message.role === 'assistant' && (
                                 <Bot className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                               )}
-                              <p className="text-stone-800 whitespace-pre-wrap">{message.content}</p>
+                              <div className="flex-1">
+                                <p className="text-stone-800 whitespace-pre-wrap">{message.content}</p>
+                                {message.role === 'assistant' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(message.content, idx)}
+                                    className="mt-2 text-xs"
+                                  >
+                                    {copiedIndex === idx ? (
+                                      <>
+                                        <Check className="w-3 h-3 mr-1" />
+                                        Copied!
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3 h-3 mr-1" />
+                                        Copy Response
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </motion.div>
                         ))
