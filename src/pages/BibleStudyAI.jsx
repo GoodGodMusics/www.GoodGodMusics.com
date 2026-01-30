@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Send, Sparkles, BookOpen, Target, HelpCircle, FileText, Loader2, Copy, Check } from 'lucide-react';
+import { Bot, Send, Sparkles, BookOpen, Target, HelpCircle, Loader2, Copy, Check, History, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
 export default function BibleStudyAI() {
@@ -15,6 +16,8 @@ export default function BibleStudyAI() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const getUser = async () => {
@@ -25,6 +28,50 @@ export default function BibleStudyAI() {
     };
     getUser();
   }, []);
+
+  const { data: conversationHistories = [] } = useQuery({
+    queryKey: ['aiConversations', currentUser?.email, activeMode],
+    queryFn: () => {
+      if (!currentUser) return [];
+      return base44.entities.AIConversationHistory.filter({ 
+        user_email: currentUser.email,
+        conversation_mode: activeMode 
+      }, '-last_updated', 20);
+    },
+    enabled: !!currentUser
+  });
+
+  const saveConversationMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser || conversation.length === 0) return;
+      
+      const title = conversation.find(m => m.role === 'user')?.content.slice(0, 50) || 'Conversation';
+      
+      if (currentConversationId) {
+        await base44.entities.AIConversationHistory.update(currentConversationId, {
+          messages: conversation.map(m => ({ ...m, timestamp: new Date().toISOString() })),
+          last_updated: new Date().toISOString()
+        });
+      } else {
+        const newConv = await base44.entities.AIConversationHistory.create({
+          user_email: currentUser.email,
+          conversation_mode: activeMode,
+          conversation_title: title,
+          messages: conversation.map(m => ({ ...m, timestamp: new Date().toISOString() })),
+          last_updated: new Date().toISOString()
+        });
+        setCurrentConversationId(newConv.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiConversations'] });
+    }
+  });
+
+  const loadConversation = (history) => {
+    setConversation(history.messages || []);
+    setCurrentConversationId(history.id);
+  };
 
   const modes = {
     commentary: {
@@ -44,12 +91,6 @@ export default function BibleStudyAI() {
       title: 'Theological Q&A',
       placeholder: 'Ask any theological or biblical question...',
       systemPrompt: 'You are a thoughtful theologian answering questions about Christianity, the Bible, and faith. Provide balanced, well-informed responses that acknowledge different theological perspectives when relevant. Support answers with scripture references. Be respectful and pastoral in tone.'
-    },
-    summaries: {
-      icon: FileText,
-      title: 'Topic Summaries',
-      placeholder: 'Enter a biblical topic (e.g., "grace", "redemption", "the Trinity")',
-      systemPrompt: 'You are a Bible teacher summarizing complex biblical topics. Provide clear, comprehensive overviews that explain key concepts, relevant scripture passages, historical development, and practical significance. Make complex theology accessible.'
     }
   };
 
@@ -70,13 +111,19 @@ export default function BibleStudyAI() {
       });
 
       const aiMessage = { role: 'assistant', content: response };
-      setConversation(prev => [...prev, aiMessage]);
+      setConversation(prev => {
+        const updated = [...prev, aiMessage];
+        return updated;
+      });
       
       // Track usage
       base44.analytics.track({
         eventName: 'ai_bible_study_query',
         properties: { mode: activeMode }
       });
+
+      // Auto-save conversation after AI response
+      setTimeout(() => saveConversationMutation.mutate(), 500);
     } catch (error) {
       const errorMessage = { 
         role: 'assistant', 
@@ -91,6 +138,7 @@ export default function BibleStudyAI() {
   const clearConversation = () => {
     setConversation([]);
     setUserInput('');
+    setCurrentConversationId(null);
   };
 
   const copyToClipboard = async (text, index) => {
@@ -142,7 +190,7 @@ export default function BibleStudyAI() {
       <section className="px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-4xl mx-auto">
           <Tabs value={activeMode} onValueChange={(val) => { setActiveMode(val); clearConversation(); }}>
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
               {Object.entries(modes).map(([key, mode]) => (
                 <TabsTrigger key={key} value={key} className="rounded-lg">
                   <mode.icon className="w-4 h-4 mr-2" />
@@ -153,6 +201,8 @@ export default function BibleStudyAI() {
 
             {Object.entries(modes).map(([key, mode]) => (
               <TabsContent key={key} value={key}>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
                 <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -260,6 +310,64 @@ export default function BibleStudyAI() {
                     </form>
                   </CardContent>
                 </Card>
+                  </div>
+
+                  {/* Conversation History Sidebar */}
+                  {currentUser && (
+                    <div className="md:col-span-1">
+                      <Card className="bg-white/80 backdrop-blur-sm sticky top-24">
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <History className="w-5 h-5" />
+                            Chat History
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                            {conversationHistories.length === 0 ? (
+                              <p className="text-sm text-stone-500 text-center py-6">
+                                No saved conversations yet. Start chatting to build your history!
+                              </p>
+                            ) : (
+                              conversationHistories.map(history => (
+                                <button
+                                  key={history.id}
+                                  onClick={() => loadConversation(history)}
+                                  className={`w-full text-left p-3 rounded-lg border transition-all ${
+                                    currentConversationId === history.id
+                                      ? 'bg-blue-100 border-blue-300'
+                                      : 'bg-white hover:bg-stone-50 border-stone-200'
+                                  }`}
+                                >
+                                  <p className="text-sm font-medium text-stone-800 line-clamp-2 mb-1">
+                                    {history.conversation_title}
+                                  </p>
+                                  <div className="flex items-center gap-1 text-xs text-stone-500">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(history.last_updated).toLocaleDateString()}
+                                  </div>
+                                  <Badge className="mt-2 text-xs" variant="outline">
+                                    {history.messages?.length || 0} messages
+                                  </Badge>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                          {conversation.length > 0 && currentUser && (
+                            <Button
+                              onClick={() => saveConversationMutation.mutate()}
+                              size="sm"
+                              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                              disabled={saveConversationMutation.isPending}
+                            >
+                              {currentConversationId ? 'Update Saved' : 'Save Conversation'}
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             ))}
           </Tabs>
@@ -295,10 +403,10 @@ export default function BibleStudyAI() {
             </Card>
             <Card className="bg-white/60 backdrop-blur-sm">
               <CardContent className="p-6">
-                <FileText className="w-8 h-8 text-pink-600 mb-3" />
-                <h3 className="font-bold text-lg mb-2">Clear Summaries</h3>
+                <History className="w-8 h-8 text-pink-600 mb-3" />
+                <h3 className="font-bold text-lg mb-2">Conversation History</h3>
                 <p className="text-sm text-stone-600">
-                  Understand complex biblical topics with accessible, comprehensive overviews
+                  Save and revisit your past theological discussions and Bible study sessions
                 </p>
               </CardContent>
             </Card>

@@ -15,6 +15,7 @@ export default function Music() {
   });
 
   const featuredReleases = releases.filter(r => r.is_featured);
+  const recentReleases = releases.slice(0, 6);
   const allReleases = releases;
 
   return (
@@ -101,6 +102,63 @@ export default function Music() {
           </motion.div>
         </div>
       </section>
+
+      {/* Recently Added Highlights */}
+      {recentReleases.length > 0 && (
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-600 via-orange-600 to-red-600">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-8"
+            >
+              <Badge className="mb-4 bg-white text-amber-600 text-lg px-4 py-2">
+                <Sparkles className="w-4 h-4 mr-2" />
+                New Releases
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2">Recently Added</h2>
+              <p className="text-white/80">Discover our latest worship music</p>
+            </motion.div>
+
+            <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
+              {recentReleases.map((release, index) => (
+                <motion.div
+                  key={release.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex-shrink-0 w-72 snap-center bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all"
+                >
+                  <div className="relative aspect-square bg-gradient-to-br from-amber-900/50 to-stone-900/50 overflow-hidden">
+                    {release.cover_image_url ? (
+                      <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music2 className="w-20 h-20 text-white/40" />
+                      </div>
+                    )}
+                    <Badge className="absolute top-3 right-3 bg-green-500 text-white border-0">NEW</Badge>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-bold text-white mb-1 line-clamp-1">{release.title}</h3>
+                    <p className="text-white/70 text-sm mb-3">{release.artist}</p>
+                    {release.youtube_link && (
+                      <a href={release.youtube_link} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" className="w-full bg-red-600 hover:bg-red-700">
+                          <Play className="w-4 h-4 mr-2 fill-white" />
+                          Listen Now
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Releases */}
       {featuredReleases.length > 0 && (

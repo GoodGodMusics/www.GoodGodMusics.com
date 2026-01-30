@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Plus, ThumbsUp, MessageCircle, Pin, Lock, Send, Search, Filter, Bell, BellOff, AlertTriangle, TrendingUp } from 'lucide-react';
+import { MessageSquare, Plus, ThumbsUp, MessageCircle, Pin, Lock, Send, Search, Filter, Bell, BellOff, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,7 @@ import { base44 } from '@/api/base44Client';
 import ForumAnalytics from '@/components/forums/ForumAnalytics';
 import TagFilter from '@/components/tags/TagFilter';
 import TagInput from '@/components/tags/TagInput';
+import EventBoard from '@/components/events/EventBoard';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -376,12 +377,16 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
           </motion.div>
         )}
 
-        {/* Tabs for Posts and Analytics */}
+        {/* Tabs for Posts, Events, and Analytics */}
         <Tabs defaultValue="posts" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="posts">
               <MessageSquare className="w-4 h-4 mr-2" />
               Discussions
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <Calendar className="w-4 h-4 mr-2" />
+              Local Events
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -540,6 +545,10 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
             )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="events">
+            <EventBoard />
           </TabsContent>
 
           <TabsContent value="analytics">
