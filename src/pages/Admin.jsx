@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone, Mail
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PopupManager from '@/components/admin/PopupManager';
 import AutoImageGenerator from '@/components/admin/AutoImageGenerator';
+import EmailCampaignManager from '@/components/admin/EmailCampaignManager';
+import MusicSubmissionReviewer from '@/components/admin/MusicSubmissionReviewer';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -232,6 +234,14 @@ export default function Admin() {
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Home className="w-4 h-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="campaigns" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email Campaigns
+            </TabsTrigger>
+            <TabsTrigger value="music" className="flex items-center gap-2">
+              <Music2 className="w-4 h-4" />
+              Music Submissions
             </TabsTrigger>
           </TabsList>
 
@@ -550,6 +560,16 @@ export default function Admin() {
                 })}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Email Campaigns Tab */}
+          <TabsContent value="campaigns">
+            <EmailCampaignManager />
+          </TabsContent>
+
+          {/* Music Submissions Tab */}
+          <TabsContent value="music">
+            <MusicSubmissionReviewer />
           </TabsContent>
 
           {/* Settings Tab */}

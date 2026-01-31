@@ -63,6 +63,7 @@ import Store from './pages/Store';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
+import SubmitMusic from './pages/SubmitMusic';
 import __Layout from './Layout.jsx';
 
 
@@ -83,6 +84,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
+    "SubmitMusic": SubmitMusic,
 }
 
 export const pagesConfig = {
