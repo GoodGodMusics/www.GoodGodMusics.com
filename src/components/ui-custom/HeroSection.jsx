@@ -113,7 +113,7 @@ export default function HeroSection() {
               </Button>
             </Link>
             
-            <Link to={createPageUrl('BibleTimeline')}>
+            <Link to={createPageUrl('UserProfile') + '?tab=playlists'}>
               <Button 
                 size="lg"
                 className="group relative overflow-hidden bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 hover:from-amber-800 hover:via-amber-700 hover:to-amber-800 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-amber-900/20 transition-all duration-300"
