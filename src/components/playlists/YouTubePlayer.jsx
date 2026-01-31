@@ -41,49 +41,78 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
 
   // Create player when song changes
   useEffect(() => {
-    if (!currentSong || !window.YT || !window.YT.Player) return;
+    if (!currentSong) return;
 
     const videoId = getVideoId(currentSong.youtube_link);
     if (!videoId) return;
 
-    // Destroy existing player
-    if (player) {
-      player.destroy();
-    }
+    const initPlayer = () => {
+      if (!window.YT || !window.YT.Player || !playerRef.current) {
+        setTimeout(initPlayer, 100);
+        return;
+      }
 
-    // Create new player
-    const newPlayer = new window.YT.Player(playerRef.current, {
-      height: '100%',
-      width: '100%',
-      videoId: videoId,
-      playerVars: {
-        autoplay: 1,
-        enablejsapi: 1,
-        origin: window.location.origin,
-        rel: 0,
-        modestbranding: 1
-      },
-      events: {
-        onReady: (event) => {
-          console.log('Player ready');
-          setPlayer(event.target);
-          setIsPlaying(true);
-        },
-        onStateChange: (event) => {
-          if (event.data === window.YT.PlayerState.PLAYING) {
-            setIsPlaying(true);
-          } else if (event.data === window.YT.PlayerState.PAUSED) {
-            setIsPlaying(false);
-          } else if (event.data === window.YT.PlayerState.ENDED) {
-            handleNext();
-          }
+      // Destroy existing player
+      if (player) {
+        try {
+          player.destroy();
+        } catch (e) {
+          console.error('Error destroying player:', e);
         }
       }
-    });
+
+      // Clear the container
+      if (playerRef.current) {
+        playerRef.current.innerHTML = '';
+      }
+
+      // Create new player
+      try {
+        const newPlayer = new window.YT.Player(playerRef.current, {
+          height: '100%',
+          width: '100%',
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+            rel: 0,
+            modestbranding: 1
+          },
+          events: {
+            onReady: (event) => {
+              console.log('Player ready for:', currentSong.song_title);
+              setPlayer(event.target);
+              setIsPlaying(true);
+            },
+            onStateChange: (event) => {
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                setIsPlaying(true);
+              } else if (event.data === window.YT.PlayerState.PAUSED) {
+                setIsPlaying(false);
+              } else if (event.data === window.YT.PlayerState.ENDED) {
+                handleNext();
+              }
+            },
+            onError: (event) => {
+              console.error('YouTube player error:', event.data);
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Error creating player:', e);
+      }
+    };
+
+    initPlayer();
 
     return () => {
-      if (newPlayer && newPlayer.destroy) {
-        newPlayer.destroy();
+      if (player && player.destroy) {
+        try {
+          player.destroy();
+        } catch (e) {
+          console.error('Cleanup error:', e);
+        }
       }
     };
   }, [currentSong?.youtube_link]);
@@ -157,7 +186,7 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
     <Card className="overflow-hidden bg-stone-900" ref={containerRef}>
       {/* Video Player */}
       <div className="aspect-video bg-black relative">
-        <div ref={playerRef} className="w-full h-full" />
+        <div id="youtube-player" ref={playerRef} className="w-full h-full" />
       </div>
 
       {/* Controls */}
