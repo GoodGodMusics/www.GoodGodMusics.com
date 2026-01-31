@@ -47,7 +47,13 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
     if (!videoId) return;
 
     const initPlayer = () => {
-      if (!window.YT || !window.YT.Player || !playerRef.current) {
+      if (!window.YT || !window.YT.Player) {
+        console.log("YouTube API not yet available, retrying...");
+        setTimeout(initPlayer, 100);
+        return;
+      }
+      if (!document.getElementById('youtube-player')) {
+        console.log("YouTube player div not yet mounted, retrying...");
         setTimeout(initPlayer, 100);
         return;
       }
@@ -84,6 +90,7 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
               console.log('Player ready for:', currentSong.song_title);
               setPlayer(event.target);
               setIsPlaying(true);
+              event.target.playVideo(); // Explicitly play the video
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
