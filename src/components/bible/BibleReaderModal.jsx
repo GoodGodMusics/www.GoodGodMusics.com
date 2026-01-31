@@ -164,12 +164,14 @@ Format the response as follows:
 
     // Use ResponsiveVoice if available (more reliable)
     if (useResponsiveVoice && window.responsiveVoice) {
+      // Use US voices which are more reliable in free tier
       const voiceName = voiceGender === 'female' 
-        ? 'UK English Female' // Softer, more natural female voice
-        : 'UK English Male'; // Warm, deep male voice
+        ? 'US English Female' 
+        : 'US English Male';
+      
       const params = {
         rate: speechRate,
-        pitch: voiceGender === 'female' ? 1.05 : 0.9, // Slightly higher pitch for female, lower for male warmth
+        pitch: voiceGender === 'female' ? 1.05 : 0.85, 
         volume: isMuted ? 0 : speechVolume,
         onstart: () => {
           setIsSpeaking(true);
@@ -181,8 +183,9 @@ Format the response as follows:
         },
         onerror: (error) => {
           console.error('ResponsiveVoice error:', error);
-          setIsSpeaking(false);
-          setIsPaused(false);
+          // Fallback to browser speech on error
+          setUseResponsiveVoice(false);
+          setTimeout(() => startSpeechBrowser(text), 100);
         }
       };
 
@@ -191,7 +194,11 @@ Format the response as follows:
       return;
     }
 
-    // Fallback to browser speech synthesis
+    // Use browser speech synthesis
+    startSpeechBrowser(text);
+  };
+
+  const startSpeechBrowser = (text) => {
     if (!window.speechSynthesis) {
       alert('Speech synthesis is not supported in your browser. Please try Chrome, Edge, or Safari.');
       return;
@@ -222,7 +229,6 @@ Format the response as follows:
       console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
       setIsPaused(false);
-      alert('Speech failed. Try using a different browser or reload the page.');
     };
 
     utteranceRef.current = utterance;
