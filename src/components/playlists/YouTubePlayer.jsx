@@ -68,7 +68,7 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
 
       // Create new player
       try {
-        const newPlayer = new window.YT.Player(playerRef.current, {
+        const newPlayer = new window.YT.Player('youtube-player', {
           height: '100%',
           width: '100%',
           videoId: videoId,
@@ -118,7 +118,10 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
   }, [currentSong?.youtube_link]);
 
   const handlePlayPause = () => {
-    if (!player) return;
+    if (!player) {
+      console.warn("YouTube player not ready");
+      return;
+    }
     if (isPlaying) {
       player.pauseVideo();
     } else {
