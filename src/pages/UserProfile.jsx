@@ -16,7 +16,8 @@ import PlaylistManager from '@/components/playlists/PlaylistManager';
 import FriendManager from '@/components/friends/FriendManager';
 import DirectMessaging from '@/components/friends/DirectMessaging';
 import BadgeDisplay from '@/components/badges/BadgeDisplay';
-import GrokEnhancedContent from '@/components/ai/GrokEnhancedContent';
+import MotivationalBannerGenerator from '@/components/ai/MotivationalBannerGenerator';
+import ProfilePictureUpload from '@/components/profile/ProfilePictureUpload';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -118,9 +119,28 @@ export default function UserProfile() {
 
   const preferences = user?.preferences || {};
 
+  const activeBanner = user?.motivational_banners?.[user?.active_banner_index || 0];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30">
+      {/* Active Banner Background */}
+      {activeBanner && (
+        <div className="relative h-80 overflow-hidden">
+          <img
+            src={activeBanner.image_url}
+            alt="Profile banner"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-amber-50/90" />
+          <div className="absolute bottom-0 left-0 right-0 p-8 text-center text-white">
+            <p className="font-serif text-2xl md:text-3xl mb-3 drop-shadow-lg">{activeBanner.message}</p>
+            <p className="text-lg italic drop-shadow-md">"{activeBanner.scripture}"</p>
+            <p className="text-sm mt-2 opacity-90">— {activeBanner.scripture_reference}</p>
+          </div>
+        </div>
+      )}
+
+      <div className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${activeBanner ? '-mt-20' : 'py-12'}`}>
         {/* Header with Character Icon */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -128,8 +148,12 @@ export default function UserProfile() {
           className="text-center mb-12"
         >
           <div className="flex justify-center mb-6 relative">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-xl shadow-amber-500/30 border-4 border-white">
-              <User className="w-16 h-16 text-white" />
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center shadow-xl shadow-amber-500/30 border-4 border-white overflow-hidden">
+              {user?.profile_picture ? (
+                <img src={user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-16 h-16 text-white" />
+              )}
             </div>
             
             {/* Character Badge Overlay */}
@@ -207,14 +231,14 @@ export default function UserProfile() {
           </Card>
         </motion.div>
 
-        {/* AI-Powered Personalized Motivation */}
+        {/* AI-Powered Motivational Banner Generator */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="mb-8"
         >
-          <GrokEnhancedContent user={user} />
+          <MotivationalBannerGenerator user={user} />
         </motion.div>
 
         {/* Main Content */}
@@ -659,6 +683,11 @@ export default function UserProfile() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Profile Picture */}
+                  <ProfilePictureUpload user={user} />
+
+                  <Separator />
+
                   {/* Profile Info */}
                   <div>
                     <h3 className="font-semibold text-stone-800 mb-4">Profile Information</h3>
