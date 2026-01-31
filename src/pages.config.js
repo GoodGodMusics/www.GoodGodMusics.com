@@ -50,6 +50,7 @@
 import About from './pages/About';
 import Admin from './pages/Admin';
 import BibleStudyAI from './pages/BibleStudyAI';
+import BibleTimeline from './pages/BibleTimeline';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import Forums from './pages/Forums';
@@ -60,7 +61,6 @@ import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import BibleTimeline from './pages/BibleTimeline';
 import __Layout from './Layout.jsx';
 
 
@@ -68,6 +68,7 @@ export const PAGES = {
     "About": About,
     "Admin": Admin,
     "BibleStudyAI": BibleStudyAI,
+    "BibleTimeline": BibleTimeline,
     "Checkout": Checkout,
     "Contact": Contact,
     "Forums": Forums,
@@ -78,7 +79,6 @@ export const PAGES = {
     "Store": Store,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "BibleTimeline": BibleTimeline,
 }
 
 export const pagesConfig = {

@@ -16,6 +16,17 @@ import ThemeSongPlayer from '@/components/homepage/ThemeSongPlayer';
 import FeaturedSongButtons from '@/components/homepage/FeaturedSongButtons';
 
 export default function Home() {
+  // Fetch all chapters stats
+  const { data: allChapters = [] } = useQuery({
+    queryKey: ['allChapters'],
+    queryFn: () => base44.entities.BibleChapter.list()
+  });
+
+  const { data: chaptersWithSongs = [] } = useQuery({
+    queryKey: ['chaptersWithSongs'],
+    queryFn: () => base44.entities.BibleChapter.filter({ youtube_link: { $exists: true } })
+  });
+
   // Fetch featured chapters with music
   const { data: featuredChapters = [] } = useQuery({
     queryKey: ['featuredChapters'],
@@ -79,6 +90,31 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <AlbumAnnouncementPopup />
+      
+      {/* Bible Stats Banner */}
+      <motion.div 
+        className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white py-3 px-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-6 flex-wrap text-sm md:text-base">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="font-semibold">{allChapters.length}</span>
+              <span className="opacity-90">Total Bible Chapters</span>
+            </div>
+            <div className="w-px h-4 bg-white/30" />
+            <div className="flex items-center gap-2">
+              <Music2 className="w-4 h-4" />
+              <span className="font-semibold">{chaptersWithSongs.length}</span>
+              <span className="opacity-90">Chapters with Songs</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Featured Song Buttons */}
       <FeaturedSongButtons />
 
