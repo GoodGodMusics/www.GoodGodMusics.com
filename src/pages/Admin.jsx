@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import PopupManager from '@/components/admin/PopupManager';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -215,6 +216,10 @@ export default function Admin() {
               <Radio className="w-4 h-4" />
               Featured Songs ({featuredSongs.length}/6)
             </TabsTrigger>
+            <TabsTrigger value="popups" className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4" />
+              Promotional Popups
+            </TabsTrigger>
             <TabsTrigger value="chapters" className="flex items-center gap-2">
               <Music2 className="w-4 h-4" />
               Bible Chapters ({chapters.length})
@@ -374,6 +379,11 @@ export default function Admin() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Promotional Popups Tab */}
+          <TabsContent value="popups">
+            <PopupManager />
           </TabsContent>
 
           {/* Featured Songs Tab */}
