@@ -70,25 +70,11 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
         }
       }
 
-      // Clear the container
-      if (playerRef.current) {
-        playerRef.current.innerHTML = '';
-      }
-
-      // Clear and recreate container
-      const container = document.getElementById('youtube-player');
-      if (container) {
-        container.innerHTML = '';
-        const iframe = document.createElement('div');
-        iframe.id = 'youtube-player-iframe';
-        container.appendChild(iframe);
-      }
-
       // Create new player
       try {
-        const newPlayer = new window.YT.Player('youtube-player-iframe', {
-          height: '360',
-          width: '640',
+        const newPlayer = new window.YT.Player('youtube-player', {
+          height: '100%',
+          width: '100%',
           videoId: videoId,
           playerVars: {
             autoplay: 1,
@@ -98,7 +84,8 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
             rel: 0,
             modestbranding: 1,
             playsinline: 1,
-            fs: 1
+            fs: 1,
+            mute: 1
           },
           events: {
             onReady: (event) => {
@@ -106,17 +93,16 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
               const playerInstance = event.target;
               setPlayer(playerInstance);
               
-              // Wait for player to be fully ready and then play
-              setTimeout(() => {
-                try {
-                  playerInstance.playVideo();
-                  setIsPlaying(true);
-                  const videoDuration = playerInstance.getDuration();
-                  if (videoDuration) setDuration(videoDuration);
-                } catch (err) {
-                  console.error('Error starting playback:', err);
-                }
-              }, 300);
+              try {
+                playerInstance.playVideo();
+                playerInstance.unMute();
+                setIsPlaying(true);
+                setIsMuted(false);
+                const videoDuration = playerInstance.getDuration();
+                if (videoDuration) setDuration(videoDuration);
+              } catch (err) {
+                console.error('Error starting playback:', err);
+              }
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
@@ -170,6 +156,10 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
       player.pauseVideo();
     } else {
       player.playVideo();
+      if (player.isMuted && player.isMuted()) {
+        player.unMute();
+        setIsMuted(false);
+      }
     }
   };
 
@@ -190,6 +180,9 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
     if (isMuted) {
       player.unMute();
       setIsMuted(false);
+      if (player.getVolume) {
+        setVolume(player.getVolume());
+      }
     } else {
       player.mute();
       setIsMuted(true);
@@ -245,17 +238,24 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
 
   return (
     <Card className="overflow-hidden bg-stone-900" ref={containerRef}>
-      {/* Video Player - Make sure it's visible */}
-      <div className="aspect-video bg-black relative">
-        <div 
-          id="youtube-player" 
-          ref={playerRef} 
-          className="w-full h-full"
-          style={{ 
-            position: 'relative',
-            paddingBottom: '56.25%',
-            height: 0,
-            overflow: 'hidden'
+      {/* Video Player */}
+      <div
+        className="aspect-video bg-black relative"
+        style={{
+          position: 'relative',
+          paddingBottom: '56.25%',
+          height: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          id="youtube-player"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
           }}
         >
           {/* YouTube iframe will be inserted here */}
