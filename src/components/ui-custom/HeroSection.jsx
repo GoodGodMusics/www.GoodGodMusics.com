@@ -113,14 +113,14 @@ export default function HeroSection() {
               </Button>
             </Link>
             
-            <Link to={createPageUrl('UserProfile') + '?tab=playlists'}>
+            <Link to={createPageUrl('Music')}>
               <Button 
                 size="lg"
                 className="group relative overflow-hidden bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 hover:from-amber-800 hover:via-amber-700 hover:to-amber-800 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-amber-900/20 transition-all duration-300"
               >
                 <span className="relative z-10 flex items-center gap-3">
                   <Music2 className="w-5 h-5" />
-                  Find Music
+                  Discover Music
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
               </Button>
