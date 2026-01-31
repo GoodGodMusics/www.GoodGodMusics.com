@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AlbumAnnouncementPopup from '@/components/homepage/AlbumAnnouncementPopup';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -14,8 +14,11 @@ import HeroSection from '@/components/ui-custom/HeroSection';
 import CommentSection from '@/components/comments/CommentSection';
 import ThemeSongPlayer from '@/components/homepage/ThemeSongPlayer';
 import FeaturedSongButtons from '@/components/homepage/FeaturedSongButtons';
+import BibleReaderModal from '@/components/bible/BibleReaderModal';
 
 export default function Home() {
+  const [selectedChapter, setSelectedChapter] = useState(null);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
   // Fetch all chapters stats
   const { data: allChapters = [] } = useQuery({
     queryKey: ['allChapters'],
@@ -203,30 +206,46 @@ export default function Home() {
                   className="group"
                 >
                   <div className="bg-stone-700/50 backdrop-blur-sm rounded-2xl p-6 border border-stone-600/50 hover:border-amber-500/50 transition-all duration-300 hover:bg-stone-700/70">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-serif font-bold text-white">
-                          {chapter.book} {chapter.chapter_number}
-                        </h3>
-                        <p className="text-amber-400/80 text-sm">{chapter.era}</p>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-serif font-bold text-white">
+                        {chapter.book} {chapter.chapter_number}
+                      </h3>
+                      <p className="text-amber-400/80 text-sm">{chapter.era}</p>
+                    </div>
+
+                    {chapter.song_title && (
+                      <div className="flex items-center gap-2 text-stone-300 mb-4">
+                        <Music2 className="w-4 h-4" />
+                        <span className="text-sm truncate">{chapter.song_title}</span>
                       </div>
+                    )}
+
+                    <div className="flex gap-2">
                       {chapter.youtube_link && (
                         <a
                           href={chapter.youtube_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center transition-colors group-hover:scale-110"
+                          className="flex-1"
                         >
-                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                          <Button className="w-full bg-red-600 hover:bg-red-500 text-white">
+                            <Music2 className="w-4 h-4 mr-2" />
+                            Listen
+                          </Button>
                         </a>
                       )}
+                      <Button
+                        onClick={() => {
+                          setSelectedChapter(chapter);
+                          setIsReaderOpen(true);
+                        }}
+                        variant="outline"
+                        className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        Read
+                      </Button>
                     </div>
-                    {chapter.song_title && (
-                      <div className="flex items-center gap-2 text-stone-300">
-                        <Music2 className="w-4 h-4" />
-                        <span className="text-sm truncate">{chapter.song_title}</span>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               ))}
@@ -381,6 +400,16 @@ export default function Home() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <CommentSection pageReference="home" />
       </section>
+
+      {/* Bible Reader Modal */}
+      <BibleReaderModal
+        isOpen={isReaderOpen}
+        onClose={() => {
+          setIsReaderOpen(false);
+          setSelectedChapter(null);
+        }}
+        chapter={selectedChapter}
+      />
     </div>
   );
 }
