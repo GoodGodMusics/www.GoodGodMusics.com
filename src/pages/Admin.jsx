@@ -71,6 +71,8 @@ export default function Admin() {
     is_active: true
   });
 
+  const [paypalLink, setPaypalLink] = useState('');
+
   const [editingFeaturedSong, setEditingFeaturedSong] = useState(null);
   const [featuredSongData, setFeaturedSongData] = useState({});
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
@@ -84,6 +86,7 @@ export default function Admin() {
         autoplay: homepageSettings.autoplay || false,
         is_active: homepageSettings.is_active !== false
       });
+      setPaypalLink(homepageSettings.paypal_donation_link || '');
     }
   }, [homepageSettings]);
 
@@ -215,6 +218,10 @@ export default function Admin() {
             <TabsTrigger value="chapters" className="flex items-center gap-2">
               <Music2 className="w-4 h-4" />
               Bible Chapters ({chapters.length})
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -521,6 +528,58 @@ export default function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h2 className="text-2xl font-bold text-stone-800 mb-2">Ministry Settings</h2>
+              <p className="text-stone-600 mb-6">
+                Configure donation and support settings for the ministry.
+              </p>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    PayPal Donation Link
+                  </label>
+                  <p className="text-xs text-stone-500 mb-3">
+                    Enter your PayPal donation link. This will be used for all "Support Our Ministry" buttons throughout the site.
+                  </p>
+                  <Input
+                    value={paypalLink}
+                    onChange={(e) => setPaypalLink(e.target.value)}
+                    placeholder="https://www.paypal.com/donate/?business=..."
+                    className="mb-3"
+                  />
+                  <Button
+                    onClick={() => updateThemeSongMutation.mutate({ paypal_donation_link: paypalLink })}
+                    disabled={updateThemeSongMutation.isPending}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    {updateThemeSongMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save PayPal Link
+                      </>
+                    )}
+                  </Button>
+                  {homepageSettings?.paypal_donation_link && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800 flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        PayPal link is configured and active
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>

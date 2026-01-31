@@ -2,12 +2,20 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 export default function DonationButton({ variant = 'default', size = 'default', className = '' }) {
-  // PayPal donation link for GoodGodMusics / DistroKid
-  const paypalLink = "https://www.paypal.com/donate/?business=GOODGODMUSICS@EMAIL.COM";
-  
-  // Note: Replace GOODGODMUSICS@EMAIL.COM with actual PayPal business email
+  // Fetch PayPal link from database
+  const { data: homepageSettings } = useQuery({
+    queryKey: ['homepageSettings'],
+    queryFn: async () => {
+      const settings = await base44.entities.HomepageSettings.list('-created_date', 1);
+      return settings[0];
+    }
+  });
+
+  const paypalLink = homepageSettings?.paypal_donation_link || "https://www.paypal.com/donate";
   
   const handleDonate = () => {
     window.open(paypalLink, '_blank', 'noopener,noreferrer');

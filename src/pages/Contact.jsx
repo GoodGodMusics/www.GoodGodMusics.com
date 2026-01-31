@@ -32,11 +32,18 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Send email notification
+    // Send confirmation email to user
     await base44.integrations.Core.SendEmail({
       to: formData.email,
       subject: `Thank you for contacting Bible Harmony`,
       body: `Dear ${formData.name},\n\nThank you for reaching out to Bible Harmony. We have received your message regarding "${formData.subject}" and will get back to you as soon as possible.\n\nYour message:\n${formData.message}\n\nBlessings,\nThe Bible Harmony Team`
+    });
+
+    // Send notification to support team
+    await base44.integrations.Core.SendEmail({
+      to: 'GoodGodMusics@gmail.com',
+      subject: `New Contact Form Submission: ${formData.subject}`,
+      body: `New contact form submission received:\n\nFrom: ${formData.name} (${formData.email})\nSubject: ${formData.subject}\n\nMessage:\n${formData.message}`
     });
 
     setIsSubmitting(false);
@@ -47,7 +54,7 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email Us',
-      detail: 'support@bibleharmony.com',
+      detail: 'GoodGodMusics@gmail.com',
       description: 'We typically respond within 24 hours'
     },
     {
