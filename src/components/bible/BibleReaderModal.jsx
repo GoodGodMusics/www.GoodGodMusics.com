@@ -8,6 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
+// Load ResponsiveVoice library
+if (typeof window !== 'undefined' && !window.responsiveVoiceLoaded) {
+  const script = document.createElement('script');
+  script.src = 'https://code.responsivevoice.org/responsivevoice.js?key=jQZ2zSby';
+  script.async = true;
+  document.head.appendChild(script);
+  window.responsiveVoiceLoaded = true;
+}
+
 export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters = [] }) {
   const [bibleText, setBibleText] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,6 +29,7 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
+  const [useResponsiveVoice, setUseResponsiveVoice] = useState(false);
 
   // Get user preferences from localStorage
   useEffect(() => {
@@ -87,19 +97,32 @@ Format the response as follows:
     }
   }, [isOpen, currentChapter?.id]);
 
-  // Load voices when available
+  // Check for ResponsiveVoice availability
   useEffect(() => {
-    if (window.speechSynthesis) {
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-          voicesLoadedRef.current = true;
+    const checkResponsiveVoice = () => {
+      if (window.responsiveVoice) {
+        setUseResponsiveVoice(true);
+        voicesLoadedRef.current = true;
+      } else {
+        // Fallback to browser speech synthesis
+        if (window.speechSynthesis) {
+          const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+              voicesLoadedRef.current = true;
+            }
+          };
+          
+          window.speechSynthesis.onvoiceschanged = loadVoices;
+          loadVoices();
         }
-      };
-      
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-      loadVoices(); // Check immediately
-    }
+      }
+    };
+
+    // Check immediately and after a delay for ResponsiveVoice to load
+    checkResponsiveVoice();
+    const timer = setTimeout(checkResponsiveVoice, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Text-to-speech functionality
@@ -131,11 +154,45 @@ Format the response as follows:
   };
 
   const startSpeech = (textToSpeak = null) => {
-    if (!window.speechSynthesis || (!bibleText && !textToSpeak) || loading) return;
+    if ((!bibleText && !textToSpeak) || loading) return;
 
     stopSpeech(); // Stop any ongoing speech
 
     const text = textToSpeak || bibleText;
+
+    // Use ResponsiveVoice if available (more reliable)
+    if (useResponsiveVoice && window.responsiveVoice) {
+      const voiceName = voiceGender === 'female' ? 'US English Female' : 'US English Male';
+      const params = {
+        rate: speechRate,
+        pitch: 1,
+        volume: isMuted ? 0 : speechVolume,
+        onstart: () => {
+          setIsSpeaking(true);
+          setIsPaused(false);
+        },
+        onend: () => {
+          setIsSpeaking(false);
+          setIsPaused(false);
+        },
+        onerror: (error) => {
+          console.error('ResponsiveVoice error:', error);
+          setIsSpeaking(false);
+          setIsPaused(false);
+        }
+      };
+
+      window.responsiveVoice.speak(text, voiceName, params);
+      setIsSpeaking(true);
+      return;
+    }
+
+    // Fallback to browser speech synthesis
+    if (!window.speechSynthesis) {
+      alert('Speech synthesis is not supported in your browser. Please try Chrome, Edge, or Safari.');
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice();
     
@@ -161,6 +218,7 @@ Format the response as follows:
       console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
       setIsPaused(false);
+      alert('Speech failed. Try using a different browser or reload the page.');
     };
 
     utteranceRef.current = utterance;
@@ -168,22 +226,44 @@ Format the response as follows:
   };
 
   const stopSpeech = () => {
+    // Stop ResponsiveVoice if it's being used
+    if (useResponsiveVoice && window.responsiveVoice) {
+      window.responsiveVoice.cancel();
+    }
+    
+    // Also stop browser speech synthesis
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      setIsPaused(false);
     }
+    
+    setIsSpeaking(false);
+    setIsPaused(false);
   };
 
   const togglePauseResume = () => {
-    if (!window.speechSynthesis || !isSpeaking) return;
+    if (!isSpeaking) return;
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-      setIsPaused(false);
-    } else {
-      window.speechSynthesis.pause();
-      setIsPaused(true);
+    // ResponsiveVoice pause/resume
+    if (useResponsiveVoice && window.responsiveVoice) {
+      if (isPaused) {
+        window.responsiveVoice.resume();
+        setIsPaused(false);
+      } else {
+        window.responsiveVoice.pause();
+        setIsPaused(true);
+      }
+      return;
+    }
+
+    // Browser speech synthesis pause/resume
+    if (window.speechSynthesis) {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        setIsPaused(false);
+      } else {
+        window.speechSynthesis.pause();
+        setIsPaused(true);
+      }
     }
   };
 
@@ -391,6 +471,7 @@ Format the response as follows:
 
           <p className="text-xs text-stone-500">
             Click any verse to start reading from that point. Volume, voice, and speed settings are saved automatically.
+            {useResponsiveVoice && <span className="text-amber-600 font-semibold"> • Enhanced voice quality active</span>}
           </p>
         </div>
 
