@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import { Music2, Heart, ExternalLink, Play, Calendar, Sparkles, Plus, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import DonationButton from '@/components/ui-custom/DonationButton';
 import ShareButton from '@/components/ui-custom/ShareButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PlaylistManager from '@/components/playlists/PlaylistManager';
 
 export default function Music() {
   const [user, setUser] = useState(null);
@@ -126,6 +128,32 @@ export default function Music() {
 
   return (
     <div className="min-h-screen">
+      {/* Playlists & Media Player Section */}
+      {user && (
+        <section className="bg-gradient-to-br from-purple-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Card className="border-2 border-purple-200 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                      <Music2 className="w-6 h-6 text-white" />
+                    </div>
+                    My Playlists
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PlaylistManager userEmail={user?.email} />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* Hero */}
       <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-pink-600 via-rose-600 to-red-600" />
@@ -454,7 +482,7 @@ export default function Music() {
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {allReleases.map((release, index) => (
                 <motion.div
                   key={release.id}
@@ -462,7 +490,7 @@ export default function Music() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group"
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group"
                 >
                   <div className="relative aspect-square bg-gradient-to-br from-stone-100 to-amber-50 overflow-hidden group/img">
                     {release.cover_image_url ? (
@@ -474,17 +502,17 @@ export default function Music() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         {generatingImageFor === release.id ? (
-                          <Loader className="w-12 h-12 text-stone-400 animate-spin" />
+                          <Loader className="w-8 h-8 text-stone-400 animate-spin" />
                         ) : (
                           <>
-                            <Music2 className="w-16 h-16 text-stone-300" />
+                            <Music2 className="w-12 h-12 text-stone-300" />
                             <Button
                               size="sm"
                               onClick={() => handleGenerateImage(release)}
-                              className="absolute inset-0 m-auto w-28 h-10 bg-stone-800/80 hover:bg-stone-900 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
+                              className="absolute inset-0 m-auto w-20 h-8 text-xs bg-stone-800/80 hover:bg-stone-900 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
                             >
-                              <Sparkles className="w-3 h-3 mr-2" />
-                              Generate
+                              <Sparkles className="w-3 h-3 mr-1" />
+                              AI
                             </Button>
                           </>
                         )}
@@ -492,26 +520,16 @@ export default function Music() {
                     )}
                   </div>
                   
-                  <div className="p-4">
-                    <h3 className="font-bold text-stone-800 mb-1 line-clamp-1">
+                  <div className="p-2">
+                    <h3 className="font-semibold text-stone-800 text-xs mb-1 line-clamp-2 leading-tight">
                       {release.title}
                     </h3>
-                    <p className="text-stone-600 text-sm mb-3 line-clamp-1">{release.artist}</p>
-                    
-                    {release.release_date && (
-                      <div className="flex items-center gap-1 text-xs text-stone-500 mb-3">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(release.release_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short'
-                        })}
-                      </div>
-                    )}
+                    <p className="text-stone-600 text-xs mb-2 line-clamp-1">{release.artist}</p>
 
                     <div className="flex gap-1">
                       {release.youtube_link && (
                         <a href={release.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1">
-                          <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-xs">
+                          <Button size="sm" className="w-full h-7 bg-red-600 hover:bg-red-700 text-xs px-1">
                             <Play className="w-3 h-3 fill-white" />
                           </Button>
                         </a>
@@ -522,7 +540,7 @@ export default function Music() {
                             size="sm"
                             variant="ghost"
                             onClick={() => toggleLikeMutation.mutate(release)}
-                            className={`${isLiked(release) ? 'text-red-500' : ''}`}
+                            className={`h-7 px-2 ${isLiked(release) ? 'text-red-500' : ''}`}
                           >
                             <Heart className={`w-3 h-3 ${isLiked(release) ? 'fill-red-500' : ''}`} />
                           </Button>
@@ -530,19 +548,12 @@ export default function Music() {
                             size="sm"
                             variant="ghost"
                             onClick={() => setShowAddToPlaylist(release)}
+                            className="h-7 px-2"
                           >
                             <Plus className="w-3 h-3" />
                           </Button>
                         </>
                       )}
-                      <ShareButton
-                        title={`${release.title} - GoodGodMusics`}
-                        description={release.description || `${release.title} by ${release.artist}`}
-                        url={release.youtube_link || release.spotify_link || window.location.href}
-                        hashtags={['GoodGodMusics', 'Worship']}
-                        variant="ghost"
-                        size="sm"
-                      />
                     </div>
                   </div>
                 </motion.div>

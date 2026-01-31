@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Separator } from '@/components/ui/separator';
 import CharityStore from '@/components/quiz/CharityStore';
-import PlaylistManager from '@/components/playlists/PlaylistManager';
+
 import FriendManager from '@/components/friends/FriendManager';
 import DirectMessaging from '@/components/friends/DirectMessaging';
 import BadgeDisplay from '@/components/badges/BadgeDisplay';
@@ -235,27 +235,7 @@ export default function UserProfile() {
           </Card>
         </motion.div>
 
-        {/* Playlists Section - Second Position */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-8"
-        >
-          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                  <Music2 className="w-6 h-6 text-white" />
-                </div>
-                My Playlists
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlaylistManager userEmail={user?.email} />
-            </CardContent>
-          </Card>
-        </motion.div>
+
 
         {/* AI-Powered Motivational Banner Generator */}
         <motion.div
