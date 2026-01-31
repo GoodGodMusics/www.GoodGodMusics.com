@@ -96,6 +96,7 @@ export default function Layout({ children, currentPageName }) {
 
   if (userRole === 'admin') {
     navLinks.push({ name: 'Admin', page: 'Admin', icon: ShoppingCart });
+    navLinks.push({ name: 'Analytics', page: 'AdminAnalytics', icon: BarChart3 });
   }
   
   if (userRole) {

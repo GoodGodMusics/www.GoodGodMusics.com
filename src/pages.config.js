@@ -61,6 +61,7 @@ import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
+import AdminAnalytics from './pages/AdminAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +80,7 @@ export const PAGES = {
     "Store": Store,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
+    "AdminAnalytics": AdminAnalytics,
 }
 
 export const pagesConfig = {
