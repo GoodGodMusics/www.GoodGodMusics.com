@@ -26,8 +26,9 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [speechVolume, setSpeechVolume] = useState(1.0);
   const [isMuted, setIsMuted] = useState(false);
   const [voiceGender, setVoiceGender] = useState('female');
-  const [currentSpeakingText, setCurrentSpeakingText] = useState(null);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+  const [parsedVerses, setParsedVerses] = useState([]);
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(-1);
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
   const [useResponsiveVoice, setUseResponsiveVoice] = useState(false);
@@ -83,9 +84,24 @@ Format the response as follows:
       });
 
       setBibleText(response);
+      
+      // Parse verses from the response
+      const lines = response.split('\n').filter(line => line.trim());
+      const verses = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const match = line.match(/^(\d+)\s+(.*)/);
+        if (match && match[2]) {
+          verses.push(match[2].trim());
+        }
+      }
+      
+      setParsedVerses(verses);
     } catch (error) {
       console.error('Error fetching Bible text:', error);
       setBibleText('Unable to load Bible text. Please try again.');
+      setParsedVerses([]);
     } finally {
       setLoading(false);
     }
@@ -94,7 +110,8 @@ Format the response as follows:
   useEffect(() => {
     if (isOpen && currentChapter) {
       fetchBibleText(currentChapter.book, currentChapter.chapter_number);
-      stopSpeech(); // Stop any ongoing speech when chapter changes
+      stopSpeech();
+      setCurrentVerseIndex(-1);
     }
   }, [isOpen, currentChapter?.id]);
 
@@ -105,7 +122,6 @@ Format the response as follows:
         setUseResponsiveVoice(true);
         voicesLoadedRef.current = true;
       } else {
-        // Fallback to browser speech synthesis
         if (window.speechSynthesis) {
           const loadVoices = () => {
             const voices = window.speechSynthesis.getVoices();
@@ -120,13 +136,11 @@ Format the response as follows:
       }
     };
 
-    // Check immediately and after a delay for ResponsiveVoice to load
     checkResponsiveVoice();
     const timer = setTimeout(checkResponsiveVoice, 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Text-to-speech functionality
   const getVoice = () => {
     if (!window.speechSynthesis) return null;
     
@@ -149,43 +163,40 @@ Format the response as follows:
 
     if (preferredVoices.length > 0) return preferredVoices[0];
     
-    // Fallback to any English voice
     const englishVoice = voices.find(v => v.lang.startsWith('en'));
     return englishVoice || voices[0];
   };
 
-  const startSpeech = (textToSpeak = null) => {
-    if ((!bibleText && !textToSpeak) || loading) return;
+  const speakVerse = (index) => {
+    if (index >= parsedVerses.length || index < 0) {
+      setIsSpeaking(false);
+      setIsPaused(false);
+      setCurrentVerseIndex(-1);
+      return;
+    }
 
-    stopSpeech(); // Stop any ongoing speech
+    const text = parsedVerses[index];
+    setCurrentVerseIndex(index);
 
-    const text = textToSpeak || bibleText;
-    setCurrentSpeakingText(text); // Store for resume functionality
+    const onVerseEnd = () => {
+      speakVerse(index + 1);
+    };
 
-    // Use ResponsiveVoice if available (more reliable)
     if (useResponsiveVoice && window.responsiveVoice) {
-      // Use US voices which are more reliable in free tier
-      const voiceName = voiceGender === 'female' 
-        ? 'US English Female' 
-        : 'US English Male';
+      const voiceName = voiceGender === 'female' ? 'US English Female' : 'US English Male';
       
       const params = {
         rate: speechRate,
-        pitch: voiceGender === 'female' ? 1.05 : 0.85, 
+        pitch: voiceGender === 'female' ? 1.05 : 0.85,
         volume: isMuted ? 0 : speechVolume,
         onstart: () => {
           setIsSpeaking(true);
           setIsPaused(false);
         },
-        onend: () => {
-          setIsSpeaking(false);
-          setIsPaused(false);
-        },
+        onend: onVerseEnd,
         onerror: (error) => {
-          console.error('ResponsiveVoice error:', error);
-          // Fallback to browser speech on error
-          setUseResponsiveVoice(false);
-          setTimeout(() => startSpeechBrowser(text), 100);
+          console.error('ResponsiveVoice error on verse', index + 1, ':', error);
+          onVerseEnd();
         }
       };
 
@@ -194,13 +205,12 @@ Format the response as follows:
       return;
     }
 
-    // Use browser speech synthesis
-    startSpeechBrowser(text);
+    speakVerseBrowser(text, onVerseEnd);
   };
 
-  const startSpeechBrowser = (text) => {
+  const speakVerseBrowser = (text, onVerseEnd) => {
     if (!window.speechSynthesis) {
-      alert('Speech synthesis is not supported in your browser. Please try Chrome, Edge, or Safari.');
+      alert('Speech synthesis is not supported in your browser.');
       return;
     }
 
@@ -220,46 +230,40 @@ Format the response as follows:
       setIsPaused(false);
     };
 
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setIsPaused(false);
-    };
+    utterance.onend = onVerseEnd;
 
     utterance.onerror = (event) => {
       console.error('Speech synthesis error:', event);
-      setIsSpeaking(false);
-      setIsPaused(false);
+      onVerseEnd();
     };
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   };
 
+  const startSpeech = (startIndex = 0) => {
+    if (!parsedVerses.length || loading) return;
+    stopSpeech();
+    speakVerse(startIndex);
+  };
+
   const stopSpeech = () => {
-    // Stop ResponsiveVoice if it's being used
     if (useResponsiveVoice && window.responsiveVoice) {
       window.responsiveVoice.cancel();
     }
     
-    // Also stop browser speech synthesis
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     
     setIsSpeaking(false);
     setIsPaused(false);
+    setCurrentVerseIndex(-1);
   };
 
   const togglePauseResume = () => {
-    // If not speaking but was paused, resume from stored text
-    if (!isSpeaking && currentSpeakingText) {
-      startSpeech(currentSpeakingText);
-      return;
-    }
-
     if (!isSpeaking) return;
 
-    // ResponsiveVoice pause/resume
     if (useResponsiveVoice && window.responsiveVoice) {
       if (isPaused) {
         window.responsiveVoice.resume();
@@ -271,7 +275,6 @@ Format the response as follows:
       return;
     }
 
-    // Browser speech synthesis pause/resume
     if (window.speechSynthesis) {
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
@@ -292,7 +295,6 @@ Format the response as follows:
       setIsMuted(false);
     }
     
-    // Immediate refresh: if already speaking, restart with new volume
     if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
       window.responsiveVoice.setVolume(newVolume);
     }
@@ -302,24 +304,13 @@ Format the response as follows:
     const newMutedState = !isMuted;
     setIsMuted(newMutedState);
     
-    // Immediate refresh: apply mute state
     if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
       window.responsiveVoice.setVolume(newMutedState ? 0 : speechVolume);
     }
   };
 
-  const handleTextClick = (clickedText) => {
-    if (!bibleText || !clickedText.trim()) return;
-    
-    // Find the position in the full text
-    const fullText = bibleText;
-    const clickPosition = fullText.indexOf(clickedText);
-    
-    if (clickPosition !== -1) {
-      // Start reading from the clicked position to the end
-      const textFromPosition = fullText.substring(clickPosition);
-      startSpeech(textFromPosition);
-    }
+  const handleVerseClick = (index) => {
+    startSpeech(index);
   };
 
   const goToNextChapter = () => {
@@ -334,33 +325,45 @@ Format the response as follows:
     }
   };
 
-  // Cleanup speech on unmount
   useEffect(() => {
     return () => {
       stopSpeech();
     };
   }, []);
 
-  // Split text into lines for clickable verses
-  const renderClickableText = () => {
-    if (!bibleText) return null;
-    
-    const lines = bibleText.split('\n').filter(line => line.trim());
-    
-    return lines.map((line, index) => (
-      <p
-        key={index}
-        onClick={() => handleTextClick(line)}
-        className={`
-          mb-2 cursor-pointer hover:bg-amber-100 hover:shadow-sm 
-          rounded px-2 py-1 transition-all duration-200
-          ${index === 0 ? 'text-xl font-bold mb-4' : ''}
-        `}
-        title="Click to read from here"
-      >
-        {line}
-      </p>
-    ));
+  const renderVerses = () => {
+    if (!parsedVerses.length) {
+      if (bibleText) {
+        return <p className="text-red-500">Error parsing verses. Please try again.</p>;
+      }
+      return null;
+    }
+
+    const chapterHeading = bibleText.split('\n')[0];
+
+    return (
+      <>
+        {chapterHeading && <p className="text-xl font-bold mb-4">{chapterHeading}</p>}
+        {parsedVerses.map((verseText, index) => {
+          const isCurrent = currentVerseIndex === index;
+          return (
+            <p
+              key={index}
+              onClick={() => handleVerseClick(index)}
+              className={`
+                mb-2 cursor-pointer hover:bg-amber-100 hover:shadow-sm
+                rounded px-2 py-1 transition-all duration-200
+                ${isCurrent ? 'bg-yellow-200 shadow-md' : ''}
+              `}
+              title="Click to read from here"
+            >
+              <span className="font-semibold text-amber-700 mr-2">{index + 1}</span>
+              {verseText}
+            </p>
+          );
+        })}
+      </>
+    );
   };
 
   return (
@@ -373,7 +376,6 @@ Format the response as follows:
           </DialogTitle>
         </DialogHeader>
 
-        {/* Navigation */}
         {eraChapters.length > 1 && (
           <div className="flex items-center justify-between gap-3 py-3 border-b">
             <Button
@@ -400,12 +402,11 @@ Format the response as follows:
           </div>
         )}
 
-        {/* Audio Controls */}
         <div className="bg-stone-100 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <Button
-              onClick={() => startSpeech()}
-              disabled={loading || !bibleText}
+              onClick={() => startSpeech(0)}
+              disabled={loading || !parsedVerses.length}
               className="bg-amber-600 hover:bg-amber-700"
             >
               <Volume2 className="w-4 h-4 mr-2" />
@@ -443,7 +444,6 @@ Format the response as follows:
 
             <div className="flex-1" />
 
-            {/* Volume Control */}
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -466,17 +466,15 @@ Format the response as follows:
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Voice Settings */}
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4 text-stone-600" />
               <Select 
                 value={voiceGender} 
                 onValueChange={(newGender) => {
                   setVoiceGender(newGender);
-                  // If currently speaking, restart with new voice
-                  if (isSpeaking && currentSpeakingText) {
+                  if (isSpeaking && currentVerseIndex !== -1) {
                     stopSpeech();
-                    setTimeout(() => startSpeech(currentSpeakingText), 100);
+                    setTimeout(() => startSpeech(currentVerseIndex), 100);
                   }
                 }}
               >
@@ -490,7 +488,6 @@ Format the response as follows:
               </Select>
             </div>
 
-            {/* Speed Control */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-stone-600">Speed:</span>
               <div className="w-32">
@@ -507,12 +504,11 @@ Format the response as follows:
           </div>
 
           <p className="text-xs text-stone-500">
-            Click any verse to start reading from that point. Press Play to continue from highlighted text. Settings are saved automatically.
+            Click any verse to start reading from that point. Each verse is read individually for better reliability.
             {useResponsiveVoice && <span className="text-amber-600 font-semibold"> • Premium voice quality active</span>}
           </p>
         </div>
 
-        {/* Bible Text */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -522,7 +518,7 @@ Format the response as follows:
           ) : bibleText ? (
             <div className="prose prose-stone max-w-none p-6 bg-amber-50/30 rounded-xl">
               <div className="font-serif leading-relaxed text-stone-800">
-                {renderClickableText()}
+                {renderVerses()}
               </div>
             </div>
           ) : (
@@ -533,7 +529,6 @@ Format the response as follows:
           )}
         </div>
 
-        {/* Chapter Info */}
         {currentChapter && (
           <div className="border-t pt-4 space-y-2">
             {currentChapter.key_verse && (
