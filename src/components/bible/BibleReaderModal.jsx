@@ -12,25 +12,35 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [bibleText, setBibleText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
+  const [speechVolume, setSpeechVolume] = useState(1.0);
+  const [isMuted, setIsMuted] = useState(false);
   const [voiceGender, setVoiceGender] = useState('female');
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const speechSynthRef = useRef(null);
   const utteranceRef = useRef(null);
+  const voicesLoadedRef = useRef(false);
 
   // Get user preferences from localStorage
   useEffect(() => {
     const savedRate = localStorage.getItem('bible_speech_rate');
     const savedGender = localStorage.getItem('bible_voice_gender');
+    const savedVolume = localStorage.getItem('bible_speech_volume');
+    const savedMuted = localStorage.getItem('bible_is_muted');
+
     if (savedRate) setSpeechRate(parseFloat(savedRate));
     if (savedGender) setVoiceGender(savedGender);
+    if (savedVolume) setSpeechVolume(parseFloat(savedVolume));
+    if (savedMuted) setIsMuted(savedMuted === 'true');
   }, []);
 
   // Save preferences
   useEffect(() => {
     localStorage.setItem('bible_speech_rate', speechRate.toString());
     localStorage.setItem('bible_voice_gender', voiceGender);
-  }, [speechRate, voiceGender]);
+    localStorage.setItem('bible_speech_volume', speechVolume.toString());
+    localStorage.setItem('bible_is_muted', isMuted.toString());
+  }, [speechRate, voiceGender, speechVolume, isMuted]);
 
   // Find current chapter in era chapters
   useEffect(() => {
@@ -77,30 +87,56 @@ Format the response as follows:
     }
   }, [isOpen, currentChapter?.id]);
 
+  // Load voices when available
+  useEffect(() => {
+    if (window.speechSynthesis) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          voicesLoadedRef.current = true;
+        }
+      };
+      
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices(); // Check immediately
+    }
+  }, []);
+
   // Text-to-speech functionality
   const getVoice = () => {
     if (!window.speechSynthesis) return null;
     
     const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return null;
     
-    // Prefer natural-sounding voices
-    const preferredVoices = voiceGender === 'female' 
-      ? voices.filter(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('samantha') || v.name.toLowerCase().includes('zira'))
-      : voices.filter(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('david') || v.name.toLowerCase().includes('mark'));
-    
+    const filterVoices = (gender, queryKeywords) => {
+      return voices.filter(v => 
+        v.lang.startsWith('en') && 
+        (v.name.toLowerCase().includes(gender) || queryKeywords.some(keyword => v.name.toLowerCase().includes(keyword))) 
+      );
+    };
+
+    let preferredVoices;
+    if (voiceGender === 'female') {
+      preferredVoices = filterVoices('female', ['samantha', 'zira', 'helena', 'karen', 'victoria']);
+    } else {
+      preferredVoices = filterVoices('male', ['david', 'alex', 'daniel', 'mark', 'tom']);
+    }
+
     if (preferredVoices.length > 0) return preferredVoices[0];
     
     // Fallback to any English voice
-    const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-    return englishVoices[0] || voices[0];
+    const englishVoice = voices.find(v => v.lang.startsWith('en'));
+    return englishVoice || voices[0];
   };
 
-  const startSpeech = () => {
-    if (!window.speechSynthesis || !bibleText) return;
+  const startSpeech = (textToSpeak = null) => {
+    if (!window.speechSynthesis || (!bibleText && !textToSpeak) || loading) return;
 
     stopSpeech(); // Stop any ongoing speech
 
-    const utterance = new SpeechSynthesisUtterance(bibleText);
+    const text = textToSpeak || bibleText;
+    const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice();
     
     if (voice) {
@@ -109,36 +145,73 @@ Format the response as follows:
     
     utterance.rate = speechRate;
     utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+    utterance.volume = isMuted ? 0 : speechVolume;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsPaused(false);
+    };
 
     utterance.onend = () => {
       setIsSpeaking(false);
+      setIsPaused(false);
     };
 
     utterance.onerror = (event) => {
       console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
+      setIsPaused(false);
     };
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
   };
 
   const stopSpeech = () => {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      setIsPaused(false);
     }
   };
 
-  const pauseSpeech = () => {
-    if (window.speechSynthesis && isSpeaking) {
-      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-        window.speechSynthesis.pause();
-      } else if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
+  const togglePauseResume = () => {
+    if (!window.speechSynthesis || !isSpeaking) return;
+
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  };
+
+  const handleVolumeChange = (value) => {
+    const newVolume = value[0] / 100;
+    setSpeechVolume(newVolume);
+    if (newVolume === 0) {
+      setIsMuted(true);
+    } else if (isMuted) {
+      setIsMuted(false);
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  const handleTextClick = (clickedText) => {
+    if (!bibleText || !clickedText.trim()) return;
+    
+    // Find the position in the full text
+    const fullText = bibleText;
+    const clickPosition = fullText.indexOf(clickedText);
+    
+    if (clickPosition !== -1) {
+      // Start reading from the clicked position to the end
+      const textFromPosition = fullText.substring(clickPosition);
+      startSpeech(textFromPosition);
     }
   };
 
@@ -161,14 +234,27 @@ Format the response as follows:
     };
   }, []);
 
-  // Load voices when available
-  useEffect(() => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        // Voices loaded
-      };
-    }
-  }, []);
+  // Split text into lines for clickable verses
+  const renderClickableText = () => {
+    if (!bibleText) return null;
+    
+    const lines = bibleText.split('\n').filter(line => line.trim());
+    
+    return lines.map((line, index) => (
+      <p
+        key={index}
+        onClick={() => handleTextClick(line)}
+        className={`
+          mb-2 cursor-pointer hover:bg-amber-100 hover:shadow-sm 
+          rounded px-2 py-1 transition-all duration-200
+          ${index === 0 ? 'text-xl font-bold mb-4' : ''}
+        `}
+        title="Click to read from here"
+      >
+        {line}
+      </p>
+    ));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -209,71 +295,102 @@ Format the response as follows:
 
         {/* Audio Controls */}
         <div className="bg-stone-100 rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
-              onClick={isSpeaking ? stopSpeech : startSpeech}
-              disabled={loading || !bibleText}
+              onClick={() => startSpeech()}
+              disabled={loading || !bibleText || isSpeaking}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {isSpeaking ? (
-                <>
-                  <VolumeX className="w-4 h-4 mr-2" />
-                  Stop Reading
-                </>
-              ) : (
-                <>
-                  <Volume2 className="w-4 h-4 mr-2" />
-                  Read Aloud
-                </>
-              )}
+              <Volume2 className="w-4 h-4 mr-2" />
+              Read Aloud
             </Button>
 
             {isSpeaking && (
-              <Button
-                onClick={pauseSpeech}
-                variant="outline"
-              >
-                <Pause className="w-4 h-4 mr-2" />
-                Pause
-              </Button>
+              <>
+                <Button
+                  onClick={togglePauseResume}
+                  variant="outline"
+                >
+                  {isPaused ? (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Resume
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-4 h-4 mr-2" />
+                      Pause
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={stopSpeech}
+                  variant="outline"
+                >
+                  <VolumeX className="w-4 h-4 mr-2" />
+                  Stop
+                </Button>
+              </>
             )}
 
             <div className="flex-1" />
 
-            {/* Voice Settings */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-stone-600" />
-                <Select value={voiceGender} onValueChange={setVoiceGender}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="female">Female Voice</SelectItem>
-                    <SelectItem value="male">Male Voice</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Volume Control */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMute}
+                className="text-stone-600 hover:bg-stone-200"
+              >
+                {isMuted || speechVolume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </Button>
+              <div className="w-24">
+                <Slider
+                  value={[isMuted ? 0 : speechVolume * 100]}
+                  onValueChange={handleVolumeChange}
+                  max={100}
+                  step={1}
+                />
               </div>
+              <span className="text-xs text-stone-600 w-8">{Math.round((isMuted ? 0 : speechVolume) * 100)}%</span>
+            </div>
+          </div>
 
-              {/* Speed Control */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-stone-600">Speed:</span>
-                <div className="w-32">
-                  <Slider
-                    value={[speechRate]}
-                    onValueChange={(value) => setSpeechRate(value[0])}
-                    min={0.5}
-                    max={2.0}
-                    step={0.1}
-                  />
-                </div>
-                <span className="text-sm text-stone-600 w-8">{speechRate.toFixed(1)}x</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Voice Settings */}
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-stone-600" />
+              <Select value={voiceGender} onValueChange={setVoiceGender}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="female">Female Voice</SelectItem>
+                  <SelectItem value="male">Male Voice</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Speed Control */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-stone-600">Speed:</span>
+              <div className="w-32">
+                <Slider
+                  value={[speechRate]}
+                  onValueChange={(value) => setSpeechRate(value[0])}
+                  min={0.5}
+                  max={2.0}
+                  step={0.1}
+                />
               </div>
+              <span className="text-sm text-stone-600 w-8">{speechRate.toFixed(1)}x</span>
             </div>
           </div>
 
           <p className="text-xs text-stone-500">
-            Select voice gender and adjust reading speed to your preference. Settings are saved automatically.
+            Click any verse to start reading from that point. Volume, voice, and speed settings are saved automatically.
           </p>
         </div>
 
@@ -286,8 +403,8 @@ Format the response as follows:
             </div>
           ) : bibleText ? (
             <div className="prose prose-stone max-w-none p-6 bg-amber-50/30 rounded-xl">
-              <div className="font-serif leading-relaxed text-stone-800 whitespace-pre-wrap">
-                {bibleText}
+              <div className="font-serif leading-relaxed text-stone-800">
+                {renderClickableText()}
               </div>
             </div>
           ) : (
