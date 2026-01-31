@@ -235,21 +235,11 @@ export default function UserProfile() {
           </Card>
         </motion.div>
 
-        {/* AI-Powered Motivational Banner Generator */}
+        {/* Playlists Section - Second Position */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="mb-8"
-        >
-          <MotivationalBannerGenerator user={user} />
-        </motion.div>
-
-        {/* Playlists Section - Permanent and Prominent */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
           className="mb-8"
         >
           <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-xl">
@@ -265,6 +255,16 @@ export default function UserProfile() {
               <PlaylistManager userEmail={user?.email} />
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* AI-Powered Motivational Banner Generator */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="mb-8"
+        >
+          <MotivationalBannerGenerator user={user} />
         </motion.div>
 
         {/* Main Content */}

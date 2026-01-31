@@ -86,15 +86,26 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
             enablejsapi: 1,
             origin: window.location.origin,
             rel: 0,
-            modestbranding: 1
+            modestbranding: 1,
+            playsinline: 1
           },
           events: {
             onReady: (event) => {
               console.log('Player ready for:', currentSong.song_title);
-              setPlayer(event.target);
-              setIsPlaying(true);
-              setDuration(event.target.getDuration());
-              event.target.playVideo(); // Explicitly play the video
+              const playerInstance = event.target;
+              setPlayer(playerInstance);
+              
+              // Wait for player to be fully ready and then play
+              setTimeout(() => {
+                try {
+                  playerInstance.playVideo();
+                  setIsPlaying(true);
+                  const videoDuration = playerInstance.getDuration();
+                  if (videoDuration) setDuration(videoDuration);
+                } catch (err) {
+                  console.error('Error starting playback:', err);
+                }
+              }, 300);
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
