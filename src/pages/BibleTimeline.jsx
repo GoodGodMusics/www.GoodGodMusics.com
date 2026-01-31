@@ -87,23 +87,23 @@ export default function BibleTimeline() {
     return grouped;
   }, [filteredChapters]);
 
-  // Biblical timeline with approximate dates
+  // Biblical timeline with approximate dates and imagery
   const timelineData = [
-    { era: 'Creation', period: 'Beginning', dateRange: 'Genesis 1-11', color: 'from-purple-500 to-purple-600' },
-    { era: 'Patriarchs', period: '2000-1800 BC', dateRange: 'Abraham to Jacob', color: 'from-blue-500 to-blue-600' },
-    { era: 'Egypt & Exodus', period: '1800-1446 BC', dateRange: 'Joseph to Moses', color: 'from-cyan-500 to-cyan-600' },
-    { era: 'Wilderness', period: '1446-1406 BC', dateRange: '40 Years', color: 'from-teal-500 to-teal-600' },
-    { era: 'Conquest', period: '1406-1375 BC', dateRange: 'Joshua', color: 'from-green-500 to-green-600' },
-    { era: 'Judges', period: '1375-1050 BC', dateRange: 'Judges Era', color: 'from-lime-500 to-lime-600' },
-    { era: 'United Kingdom', period: '1050-930 BC', dateRange: 'Saul, David, Solomon', color: 'from-yellow-500 to-yellow-600' },
-    { era: 'Divided Kingdom', period: '930-586 BC', dateRange: 'Israel & Judah', color: 'from-orange-500 to-orange-600' },
-    { era: 'Exile', period: '586-539 BC', dateRange: 'Babylonian Captivity', color: 'from-red-500 to-red-600' },
-    { era: 'Return', period: '539-400 BC', dateRange: 'Ezra & Nehemiah', color: 'from-pink-500 to-pink-600' },
-    { era: 'Intertestamental', period: '400 BC - 4 BC', dateRange: 'Between Testaments', color: 'from-rose-500 to-rose-600' },
-    { era: 'Gospels', period: '4 BC - 30 AD', dateRange: 'Life of Christ', color: 'from-amber-500 to-amber-600' },
-    { era: 'Early Church', period: '30-60 AD', dateRange: 'Acts', color: 'from-emerald-500 to-emerald-600' },
-    { era: 'Epistles', period: '50-95 AD', dateRange: 'Paul & Letters', color: 'from-sky-500 to-sky-600' },
-    { era: 'Apocalypse', period: '95 AD', dateRange: 'Revelation', color: 'from-violet-500 to-violet-600' }
+    { era: 'Creation', period: 'Beginning', dateRange: 'Genesis 1-11', color: 'from-purple-500 to-purple-600', image: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400' },
+    { era: 'Patriarchs', period: '2000-1800 BC', dateRange: 'Abraham to Jacob', color: 'from-blue-500 to-blue-600', image: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400' },
+    { era: 'Egypt & Exodus', period: '1800-1446 BC', dateRange: 'Joseph to Moses', color: 'from-cyan-500 to-cyan-600', image: 'https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=400' },
+    { era: 'Wilderness', period: '1446-1406 BC', dateRange: '40 Years', color: 'from-teal-500 to-teal-600', image: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=400' },
+    { era: 'Conquest', period: '1406-1375 BC', dateRange: 'Joshua', color: 'from-green-500 to-green-600', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400' },
+    { era: 'Judges', period: '1375-1050 BC', dateRange: 'Judges Era', color: 'from-lime-500 to-lime-600', image: 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=400' },
+    { era: 'United Kingdom', period: '1050-930 BC', dateRange: 'Saul, David, Solomon', color: 'from-yellow-500 to-yellow-600', image: 'https://images.unsplash.com/photo-1605106702842-01a887a31122?w=400' },
+    { era: 'Divided Kingdom', period: '930-586 BC', dateRange: 'Israel & Judah', color: 'from-orange-500 to-orange-600', image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=400' },
+    { era: 'Exile', period: '586-539 BC', dateRange: 'Babylonian Captivity', color: 'from-red-500 to-red-600', image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400' },
+    { era: 'Return', period: '539-400 BC', dateRange: 'Ezra & Nehemiah', color: 'from-pink-500 to-pink-600', image: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400' },
+    { era: 'Intertestamental', period: '400 BC - 4 BC', dateRange: 'Between Testaments', color: 'from-rose-500 to-rose-600', image: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=400' },
+    { era: 'Gospels', period: '4 BC - 30 AD', dateRange: 'Life of Christ', color: 'from-amber-500 to-amber-600', image: 'https://images.unsplash.com/photo-1438032005730-c779502df39b?w=400' },
+    { era: 'Early Church', period: '30-60 AD', dateRange: 'Acts', color: 'from-emerald-500 to-emerald-600', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400' },
+    { era: 'Epistles', period: '50-95 AD', dateRange: 'Paul & Letters', color: 'from-sky-500 to-sky-600', image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400' },
+    { era: 'Apocalypse', period: '95 AD', dateRange: 'Revelation', color: 'from-violet-500 to-violet-600', image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400' }
   ];
 
   const eraOrder = timelineData.map(t => t.era);
@@ -180,20 +180,32 @@ export default function BibleTimeline() {
                   <motion.button
                     onClick={() => chaptersByEra[item.era] && handleReadEra(item.era, chaptersByEra[item.era])}
                     disabled={!chaptersByEra[item.era]}
-                    className={`w-full bg-gradient-to-br ${item.color} rounded-2xl p-4 shadow-lg text-white relative z-10 transition-all ${chaptersByEra[item.era] ? 'hover:scale-105 hover:shadow-xl cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                    className={`w-full rounded-2xl overflow-hidden shadow-lg relative z-10 transition-all ${chaptersByEra[item.era] ? 'hover:scale-105 hover:shadow-xl cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
                     whileHover={chaptersByEra[item.era] ? { scale: 1.05 } : {}}
                     whileTap={chaptersByEra[item.era] ? { scale: 0.98 } : {}}
                   >
-                    <div className="text-center">
-                      <div className="font-bold text-sm mb-1">{item.era}</div>
-                      <div className="text-xs opacity-90">{item.period}</div>
-                      <div className="text-xs opacity-75 mt-1">{item.dateRange}</div>
+                    {/* Background Image */}
+                    <div className="absolute inset-0">
+                      <img 
+                        src={item.image} 
+                        alt={item.era}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-85`} />
+                      <div className="absolute inset-0 bg-black/20" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative text-center p-4 text-white">
+                      <div className="font-bold text-sm mb-1 drop-shadow-lg">{item.era}</div>
+                      <div className="text-xs opacity-90 drop-shadow">{item.period}</div>
+                      <div className="text-xs opacity-75 mt-1 drop-shadow">{item.dateRange}</div>
                       {chaptersByEra[item.era] && (
                         <>
-                          <Badge className="mt-2 bg-white/20 text-white border-white/30">
+                          <Badge className="mt-2 bg-white/30 backdrop-blur-sm text-white border-white/40">
                             {chaptersByEra[item.era].length} chapters
                           </Badge>
-                          <div className="flex items-center justify-center gap-1 mt-2 text-xs font-semibold">
+                          <div className="flex items-center justify-center gap-1 mt-2 text-xs font-semibold drop-shadow">
                             <BookOpen className="w-3 h-3" />
                             Read
                           </div>

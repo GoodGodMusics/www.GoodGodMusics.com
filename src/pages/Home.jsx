@@ -24,7 +24,10 @@ export default function Home() {
 
   const { data: chaptersWithSongs = [] } = useQuery({
     queryKey: ['chaptersWithSongs'],
-    queryFn: () => base44.entities.BibleChapter.filter({ youtube_link: { $exists: true } })
+    queryFn: async () => {
+      const chapters = await base44.entities.BibleChapter.list();
+      return chapters.filter(ch => ch.youtube_link && ch.youtube_link.trim() !== '');
+    }
   });
 
   // Fetch featured chapters with music
