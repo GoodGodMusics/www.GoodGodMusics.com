@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, TrendingUp, TrendingDown, Users, DollarSign, 
@@ -20,6 +21,20 @@ import {
 export default function AdminAnalytics() {
   const [timeRange, setTimeRange] = useState('month');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [optimizationsApplied, setOptimizationsApplied] = useState(
+    localStorage.getItem('optimizations_applied') === 'true'
+  );
+
+  const handleApplyOptimizations = () => {
+    // Mark optimizations as applied
+    localStorage.setItem('optimizations_applied', 'true');
+    setOptimizationsApplied(true);
+    
+    toast.success('Optimization settings confirmed! Bible text caching, era image caching, and streamlined prompts are active.', {
+      duration: 5000,
+      position: 'top-center'
+    });
+  };
 
   // Fetch user interactions for analysis
   const { data: interactions = [] } = useQuery({

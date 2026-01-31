@@ -25,7 +25,9 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [parsedVerses, setParsedVerses] = useState([]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(-1);
+  const [pausedVerseIndex, setPausedVerseIndex] = useState(-1);
   const bibleTextCacheRef = useRef({});
+  const isSpeakingRef = useRef(false);
 
   // Get user preferences from localStorage
   useEffect(() => {
