@@ -23,6 +23,14 @@ export default function Music() {
     queryFn: () => base44.entities.MusicRelease.list('-release_date', 20)
   });
 
+  const { data: featuredSongs = [] } = useQuery({
+    queryKey: ['featuredSongs'],
+    queryFn: async () => {
+      const songs = await base44.entities.FeaturedSong.filter({ is_active: true }, 'position');
+      return songs;
+    }
+  });
+
   const { data: userPlaylists = [] } = useQuery({
     queryKey: ['userPlaylists', user?.email],
     queryFn: () => base44.entities.UserPlaylist.filter({ user_email: user.email }),
@@ -128,6 +136,69 @@ export default function Music() {
 
   return (
     <div className="min-h-screen">
+      {/* Featured Songs Section - At Top */}
+      {featuredSongs.length > 0 && (
+        <section className="bg-gradient-to-br from-stone-800 via-stone-900 to-stone-800 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
+            >
+              <span className="text-amber-400 text-sm tracking-[0.3em] uppercase font-light">Handpicked</span>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold mt-4">Featured Songs</h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto mt-6 rounded-full" />
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredSongs.map((song, index) => {
+                const extractYoutubeId = (url) => {
+                  const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                  return match ? match[1] : null;
+                };
+                const youtubeId = extractYoutubeId(song.youtube_link);
+                const thumbnailUrl = song.thumbnail_url || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null);
+
+                return (
+                  <motion.div
+                    key={song.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-stone-700/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-stone-600/50 hover:border-amber-500/50 transition-all group"
+                  >
+                    {thumbnailUrl && (
+                      <div className="aspect-video overflow-hidden bg-stone-800">
+                        <img 
+                          src={thumbnailUrl} 
+                          alt={song.song_title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <h3 className="text-xl font-serif font-bold text-white mb-2">{song.song_title}</h3>
+                      {song.artist_name && <p className="text-amber-400/80 text-sm mb-4">{song.artist_name}</p>}
+                      {song.youtube_link && (
+                        <a
+                          href={song.youtube_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 rounded-full text-white text-sm transition-colors"
+                        >
+                          <Play className="w-4 h-4 fill-white" />
+                          Watch on YouTube
+                        </a>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Playlists & Media Player Section */}
       {user && (
         <section className="bg-gradient-to-br from-purple-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
