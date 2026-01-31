@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PopupManager from '@/components/admin/PopupManager';
+import AutoImageGenerator from '@/components/admin/AutoImageGenerator';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -216,6 +217,10 @@ export default function Admin() {
               <Radio className="w-4 h-4" />
               Featured Songs ({featuredSongs.length}/6)
             </TabsTrigger>
+            <TabsTrigger value="images" className="flex items-center gap-2">
+              <Music2 className="w-4 h-4" />
+              Auto Image Generator
+            </TabsTrigger>
             <TabsTrigger value="popups" className="flex items-center gap-2">
               <Megaphone className="w-4 h-4" />
               Promotional Popups
@@ -379,6 +384,11 @@ export default function Admin() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Auto Image Generator Tab */}
+          <TabsContent value="images">
+            <AutoImageGenerator />
           </TabsContent>
 
           {/* Promotional Popups Tab */}

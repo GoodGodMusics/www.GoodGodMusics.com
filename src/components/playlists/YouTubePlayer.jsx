@@ -75,19 +75,30 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
         playerRef.current.innerHTML = '';
       }
 
+      // Clear and recreate container
+      const container = document.getElementById('youtube-player');
+      if (container) {
+        container.innerHTML = '';
+        const iframe = document.createElement('div');
+        iframe.id = 'youtube-player-iframe';
+        container.appendChild(iframe);
+      }
+
       // Create new player
       try {
-        const newPlayer = new window.YT.Player('youtube-player', {
-          height: '100%',
-          width: '100%',
+        const newPlayer = new window.YT.Player('youtube-player-iframe', {
+          height: '360',
+          width: '640',
           videoId: videoId,
           playerVars: {
             autoplay: 1,
+            controls: 1,
             enablejsapi: 1,
             origin: window.location.origin,
             rel: 0,
             modestbranding: 1,
-            playsinline: 1
+            playsinline: 1,
+            fs: 1
           },
           events: {
             onReady: (event) => {
@@ -234,9 +245,21 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
 
   return (
     <Card className="overflow-hidden bg-stone-900" ref={containerRef}>
-      {/* Video Player */}
+      {/* Video Player - Make sure it's visible */}
       <div className="aspect-video bg-black relative">
-        <div id="youtube-player" ref={playerRef} className="w-full h-full" />
+        <div 
+          id="youtube-player" 
+          ref={playerRef} 
+          className="w-full h-full"
+          style={{ 
+            position: 'relative',
+            paddingBottom: '56.25%',
+            height: 0,
+            overflow: 'hidden'
+          }}
+        >
+          {/* YouTube iframe will be inserted here */}
+        </div>
       </div>
 
       {/* Controls */}
