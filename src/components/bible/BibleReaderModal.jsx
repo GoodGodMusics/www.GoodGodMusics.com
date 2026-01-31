@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Volume2, VolumeX, Loader2, BookOpen, Settings, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { X, Volume2, VolumeX, Loader2, BookOpen, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -22,37 +21,22 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [loading, setLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [speechRate, setSpeechRate] = useState(1.0);
-  const [speechVolume, setSpeechVolume] = useState(1.0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [voiceGender, setVoiceGender] = useState('female');
+  const [speechRate, setSpeechRate] = useState(1.2);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [parsedVerses, setParsedVerses] = useState([]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(-1);
-  const utteranceRef = useRef(null);
-  const voicesLoadedRef = useRef(false);
-  const [useResponsiveVoice, setUseResponsiveVoice] = useState(false);
+  const bibleTextCacheRef = useRef({});
 
   // Get user preferences from localStorage
   useEffect(() => {
     const savedRate = localStorage.getItem('bible_speech_rate');
-    const savedGender = localStorage.getItem('bible_voice_gender');
-    const savedVolume = localStorage.getItem('bible_speech_volume');
-    const savedMuted = localStorage.getItem('bible_is_muted');
-
     if (savedRate) setSpeechRate(parseFloat(savedRate));
-    if (savedGender) setVoiceGender(savedGender);
-    if (savedVolume) setSpeechVolume(parseFloat(savedVolume));
-    if (savedMuted) setIsMuted(savedMuted === 'true');
   }, []);
 
   // Save preferences
   useEffect(() => {
     localStorage.setItem('bible_speech_rate', speechRate.toString());
-    localStorage.setItem('bible_voice_gender', voiceGender);
-    localStorage.setItem('bible_speech_volume', speechVolume.toString());
-    localStorage.setItem('bible_is_muted', isMuted.toString());
-  }, [speechRate, voiceGender, speechVolume, isMuted]);
+  }, [speechRate]);
 
   // Find current chapter in era chapters
   useEffect(() => {
@@ -66,26 +50,28 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
 
   const currentChapter = eraChapters[currentChapterIndex] || chapter;
 
-  // Fetch Bible text using AI
+  // Fetch Bible text with caching
   const fetchBibleText = async (book, chapterNum) => {
+    const cacheKey = `${book}_${chapterNum}`;
+    
+    // Check cache first
+    if (bibleTextCacheRef.current[cacheKey]) {
+      const cached = bibleTextCacheRef.current[cacheKey];
+      setBibleText(cached.text);
+      setParsedVerses(cached.verses);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Please provide the full text of ${book} chapter ${chapterNum} from the NIV (New International Version) Bible. 
-        
-Format the response as follows:
-- Start with the chapter heading: "${book} ${chapterNum}"
-- Then provide all verses in this exact format: "1 [verse text]" for verse 1, "2 [verse text]" for verse 2, etc.
-- Each verse should be on its own line
-- Include ALL verses from the chapter
-- Do not add any commentary, explanations, or additional text
-- Use the actual NIV translation text`,
+        prompt: `${book} ${chapterNum} NIV. Format: heading, then verses as "1 [text]", "2 [text]", etc.`,
         add_context_from_internet: true
       });
 
       setBibleText(response);
       
-      // Parse verses from the response
+      // Parse verses
       const lines = response.split('\n').filter(line => line.trim());
       const verses = [];
       
@@ -98,6 +84,9 @@ Format the response as follows:
       }
       
       setParsedVerses(verses);
+      
+      // Cache the result
+      bibleTextCacheRef.current[cacheKey] = { text: response, verses };
     } catch (error) {
       console.error('Error fetching Bible text:', error);
       setBibleText('Unable to load Bible text. Please try again.');
@@ -115,51 +104,20 @@ Format the response as follows:
     }
   }, [isOpen, currentChapter?.id]);
 
-  // Check for ResponsiveVoice availability
-  useEffect(() => {
-    const checkResponsiveVoice = () => {
-      if (window.responsiveVoice) {
-        setUseResponsiveVoice(true);
-        voicesLoadedRef.current = true;
-      } else {
-        if (window.speechSynthesis) {
-          const loadVoices = () => {
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-              voicesLoadedRef.current = true;
-            }
-          };
-          
-          window.speechSynthesis.onvoiceschanged = loadVoices;
-          loadVoices();
-        }
-      }
-    };
-
-    checkResponsiveVoice();
-    const timer = setTimeout(checkResponsiveVoice, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const getVoice = () => {
     if (!window.speechSynthesis) return null;
     
     const voices = window.speechSynthesis.getVoices();
     if (voices.length === 0) return null;
     
-    const filterVoices = (gender, queryKeywords) => {
-      return voices.filter(v => 
-        v.lang.startsWith('en') && 
-        (v.name.toLowerCase().includes(gender) || queryKeywords.some(keyword => v.name.toLowerCase().includes(keyword))) 
-      );
-    };
-
-    let preferredVoices;
-    if (voiceGender === 'female') {
-      preferredVoices = filterVoices('female', ['samantha', 'zira', 'helena', 'karen', 'victoria']);
-    } else {
-      preferredVoices = filterVoices('male', ['david', 'alex', 'daniel', 'mark', 'tom']);
-    }
+    // Always use female voice
+    const preferredVoices = voices.filter(v => 
+      v.lang.startsWith('en') && 
+      (v.name.toLowerCase().includes('female') || 
+       ['samantha', 'zira', 'helena', 'karen', 'victoria'].some(keyword => 
+         v.name.toLowerCase().includes(keyword)
+       ))
+    );
 
     if (preferredVoices.length > 0) return preferredVoices[0];
     
@@ -179,40 +137,11 @@ Format the response as follows:
     setCurrentVerseIndex(index);
 
     const onVerseEnd = () => {
-      speakVerse(index + 1);
+      // Small delay between verses for better clarity
+      setTimeout(() => speakVerse(index + 1), 100);
     };
 
-    if (useResponsiveVoice && window.responsiveVoice) {
-      const voiceName = voiceGender === 'female' ? 'US English Female' : 'US English Male';
-      
-      const params = {
-        rate: speechRate,
-        pitch: voiceGender === 'female' ? 1.05 : 0.85,
-        volume: isMuted ? 0 : speechVolume,
-        onstart: () => {
-          setIsSpeaking(true);
-          setIsPaused(false);
-        },
-        onend: onVerseEnd,
-        onerror: (error) => {
-          console.error('ResponsiveVoice error on verse', index + 1, ':', error);
-          onVerseEnd();
-        }
-      };
-
-      window.responsiveVoice.speak(text, voiceName, params);
-      setIsSpeaking(true);
-      return;
-    }
-
-    speakVerseBrowser(text, onVerseEnd);
-  };
-
-  const speakVerseBrowser = (text, onVerseEnd) => {
-    if (!window.speechSynthesis) {
-      alert('Speech synthesis is not supported in your browser.');
-      return;
-    }
+    if (!window.speechSynthesis) return;
 
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice();
@@ -223,7 +152,7 @@ Format the response as follows:
     
     utterance.rate = speechRate;
     utterance.pitch = 1.0;
-    utterance.volume = isMuted ? 0 : speechVolume;
+    utterance.volume = 0.8; // Standard volume
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -233,25 +162,21 @@ Format the response as follows:
     utterance.onend = onVerseEnd;
 
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
+      console.error('Speech error:', event);
       onVerseEnd();
     };
 
-    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   };
 
   const startSpeech = (startIndex = 0) => {
     if (!parsedVerses.length || loading) return;
     stopSpeech();
+    // Start immediately without delay
     speakVerse(startIndex);
   };
 
   const stopSpeech = () => {
-    if (useResponsiveVoice && window.responsiveVoice) {
-      window.responsiveVoice.cancel();
-    }
-    
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -262,50 +187,14 @@ Format the response as follows:
   };
 
   const togglePauseResume = () => {
-    if (!isSpeaking) return;
+    if (!isSpeaking || !window.speechSynthesis) return;
 
-    if (useResponsiveVoice && window.responsiveVoice) {
-      if (isPaused) {
-        window.responsiveVoice.resume();
-        setIsPaused(false);
-      } else {
-        window.responsiveVoice.pause();
-        setIsPaused(true);
-      }
-      return;
-    }
-
-    if (window.speechSynthesis) {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-        setIsPaused(false);
-      } else {
-        window.speechSynthesis.pause();
-        setIsPaused(true);
-      }
-    }
-  };
-
-  const handleVolumeChange = (value) => {
-    const newVolume = value[0] / 100;
-    setSpeechVolume(newVolume);
-    if (newVolume === 0) {
-      setIsMuted(true);
-    } else if (isMuted) {
-      setIsMuted(false);
-    }
-    
-    if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
-      window.responsiveVoice.setVolume(newVolume);
-    }
-  };
-
-  const toggleMute = () => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    
-    if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
-      window.responsiveVoice.setVolume(newMutedState ? 0 : speechVolume);
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
     }
   };
 
@@ -445,56 +334,12 @@ Format the response as follows:
             <div className="flex-1" />
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMute}
-                className="text-stone-600 hover:bg-stone-200"
-              >
-                {isMuted || speechVolume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </Button>
-              <div className="w-24">
-                <Slider
-                  value={[isMuted ? 0 : speechVolume * 100]}
-                  onValueChange={handleVolumeChange}
-                  max={100}
-                  step={1}
-                />
-              </div>
-              <span className="text-xs text-stone-600 w-8">{Math.round((isMuted ? 0 : speechVolume) * 100)}%</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4 text-stone-600" />
-              <Select 
-                value={voiceGender} 
-                onValueChange={(newGender) => {
-                  setVoiceGender(newGender);
-                  if (isSpeaking && currentVerseIndex !== -1) {
-                    stopSpeech();
-                    setTimeout(() => startSpeech(currentVerseIndex), 100);
-                  }
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="female">Soft Female</SelectItem>
-                  <SelectItem value="male">Deep Male</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
               <span className="text-sm text-stone-600">Speed:</span>
               <div className="w-32">
                 <Slider
                   value={[speechRate]}
                   onValueChange={(value) => setSpeechRate(value[0])}
-                  min={0.5}
+                  min={0.8}
                   max={2.0}
                   step={0.1}
                 />
@@ -504,8 +349,7 @@ Format the response as follows:
           </div>
 
           <p className="text-xs text-stone-500">
-            Click any verse to start reading from that point. Each verse is read individually for better reliability.
-            {useResponsiveVoice && <span className="text-amber-600 font-semibold"> • Premium voice quality active</span>}
+            Click any verse to start reading from that point. Audio plays at standard volume - use device controls to adjust.
           </p>
         </div>
 
