@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Shuffle, ExternalLink, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+const STORAGE_KEY = 'youtube_player_state';
 
 export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, onShufflePlaylist }) {
   const playerRef = useRef(null);
@@ -13,7 +16,10 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
   const [volume, setVolume] = useState(100);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [videoError, setVideoError] = useState(null);
+  const [showFallback, setShowFallback] = useState(false);
   const progressIntervalRef = useRef(null);
+  const playerInstanceRef = useRef(null);
 
   const currentSong = playlist?.[currentIndex];
 
@@ -24,6 +30,30 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
     const match = url.match(regex);
     return match ? match[1] : null;
   };
+
+  // Load saved state from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        setVolume(state.volume || 100);
+        setIsMuted(state.isMuted || false);
+      }
+    } catch (e) {
+      console.error('Error loading saved state:', e);
+    }
+  }, []);
+
+  // Save state to localStorage
+  useEffect(() => {
+    const state = { volume, isMuted, currentIndex, currentTime };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('Error saving state:', e);
+    }
+  }, [volume, isMuted, currentIndex, currentTime]);
 
   // Initialize YouTube API
   useEffect(() => {
@@ -47,27 +77,34 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
     if (!currentSong) return;
 
     const videoId = getVideoId(currentSong.youtube_link);
-    if (!videoId) return;
+    if (!videoId) {
+      setVideoError('Invalid YouTube URL');
+      setShowFallback(true);
+      return;
+    }
+
+    setVideoError(null);
+    setShowFallback(false);
 
     const initPlayer = () => {
       if (!window.YT || !window.YT.Player) {
-        console.log("YouTube API not yet available, retrying...");
         setTimeout(initPlayer, 100);
         return;
       }
       if (!document.getElementById('youtube-player')) {
-        console.log("YouTube player div not yet mounted, retrying...");
         setTimeout(initPlayer, 100);
         return;
       }
 
       // Destroy existing player
-      if (player) {
+      if (playerInstanceRef.current) {
         try {
-          player.destroy();
+          playerInstanceRef.current.destroy();
         } catch (e) {
           console.error('Error destroying player:', e);
         }
+        playerInstanceRef.current = null;
+        setPlayer(null);
       }
 
       // Create new player
@@ -91,13 +128,17 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
             onReady: (event) => {
               console.log('Player ready for:', currentSong.song_title);
               const playerInstance = event.target;
+              playerInstanceRef.current = playerInstance;
               setPlayer(playerInstance);
               
               try {
                 playerInstance.playVideo();
-                playerInstance.unMute();
+                setTimeout(() => {
+                  playerInstance.unMute();
+                  playerInstance.setVolume(volume);
+                  setIsMuted(false);
+                }, 500);
                 setIsPlaying(true);
-                setIsMuted(false);
                 const videoDuration = playerInstance.getDuration();
                 if (videoDuration) setDuration(videoDuration);
               } catch (err) {
@@ -108,6 +149,7 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
               if (event.data === window.YT.PlayerState.PLAYING) {
                 setIsPlaying(true);
                 setDuration(event.target.getDuration());
+                setShowFallback(false);
                 // Start progress tracking
                 if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
                 progressIntervalRef.current = setInterval(() => {
@@ -125,11 +167,25 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
             },
             onError: (event) => {
               console.error('YouTube player error:', event.data);
+              let errorMsg = 'Video failed to load';
+              
+              // Error codes: 2 = invalid param, 5 = HTML5 error, 100 = not found, 101/150 = embedding disabled
+              if (event.data === 100) {
+                errorMsg = 'Video not found or has been removed';
+              } else if (event.data === 101 || event.data === 150) {
+                errorMsg = 'Video cannot be embedded (disabled by owner)';
+              }
+              
+              setVideoError(errorMsg);
+              setShowFallback(true);
+              setIsPlaying(false);
             }
           }
         });
       } catch (e) {
         console.error('Error creating player:', e);
+        setVideoError('Failed to initialize player');
+        setShowFallback(true);
       }
     };
 
@@ -137,12 +193,13 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
 
     return () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      if (player && player.destroy) {
+      if (playerInstanceRef.current) {
         try {
-          player.destroy();
+          playerInstanceRef.current.destroy();
         } catch (e) {
           console.error('Cleanup error:', e);
         }
+        playerInstanceRef.current = null;
       }
     };
   }, [currentSong?.youtube_link]);
@@ -236,6 +293,17 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
     );
   }
 
+  const handleOpenYouTube = () => {
+    if (currentSong?.youtube_link) {
+      window.open(currentSong.youtube_link, '_blank');
+    }
+  };
+
+  const handleSearchManually = () => {
+    const query = encodeURIComponent(`${currentSong.song_title} ${currentSong.song_artist}`);
+    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+  };
+
   return (
     <Card className="overflow-hidden bg-stone-900" ref={containerRef}>
       {/* Video Player */}
@@ -248,18 +316,53 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, o
           overflow: 'hidden',
         }}
       >
-        <div
-          id="youtube-player"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-          }}
-        >
-          {/* YouTube iframe will be inserted here */}
-        </div>
+        {showFallback ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-stone-800 to-stone-900 p-6">
+            <div className="text-center max-w-md">
+              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-amber-400" />
+              <h3 className="text-xl font-bold text-white mb-2">Video Unavailable</h3>
+              <p className="text-stone-300 text-sm mb-6">{videoError || 'This video cannot be played'}</p>
+              
+              <div className="space-y-3">
+                <Button
+                  onClick={handleOpenYouTube}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open on YouTube
+                </Button>
+                <Button
+                  onClick={handleSearchManually}
+                  variant="outline"
+                  className="w-full border-stone-600 text-stone-300 hover:bg-stone-700"
+                >
+                  Search for Song
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  variant="ghost"
+                  className="w-full text-stone-400 hover:text-white hover:bg-stone-700"
+                  disabled={currentIndex === playlist.length - 1}
+                >
+                  Skip to Next Track
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            id="youtube-player"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            {/* YouTube iframe will be inserted here */}
+          </div>
+        )}
       </div>
 
       {/* Controls */}
