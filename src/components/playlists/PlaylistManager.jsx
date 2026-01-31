@@ -127,6 +127,17 @@ export default function PlaylistManager({ userEmail }) {
     });
   };
 
+  const handleShufflePlaylist = () => {
+    if (!selectedPlaylist || !selectedPlaylist.songs || selectedPlaylist.songs.length === 0) return;
+    
+    const shuffled = [...selectedPlaylist.songs].sort(() => Math.random() - 0.5);
+    updateMutation.mutate({
+      id: selectedPlaylist.id,
+      data: { songs: shuffled }
+    });
+    setCurrentSongIndex(0); // Reset to first song after shuffle
+  };
+
   const filteredChapters = allChapters.filter(chapter =>
     !searchQuery ||
     chapter.book?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -263,6 +274,7 @@ export default function PlaylistManager({ userEmail }) {
               playlist={selectedPlaylist.songs || []}
               currentIndex={currentSongIndex}
               onIndexChange={setCurrentSongIndex}
+              onShufflePlaylist={handleShufflePlaylist}
             />
           </div>
 

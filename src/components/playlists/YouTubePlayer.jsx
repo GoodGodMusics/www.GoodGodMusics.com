@@ -1,16 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
 
-export default function YouTubePlayer({ playlist, currentIndex, onIndexChange }) {
+export default function YouTubePlayer({ playlist, currentIndex, onIndexChange, onShufflePlaylist }) {
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const [player, setPlayer] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(100);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progressIntervalRef = useRef(null);
 
   const currentSong = playlist?.[currentIndex];
 
@@ -90,14 +93,25 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
               console.log('Player ready for:', currentSong.song_title);
               setPlayer(event.target);
               setIsPlaying(true);
+              setDuration(event.target.getDuration());
               event.target.playVideo(); // Explicitly play the video
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
                 setIsPlaying(true);
+                setDuration(event.target.getDuration());
+                // Start progress tracking
+                if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+                progressIntervalRef.current = setInterval(() => {
+                  if (event.target && event.target.getCurrentTime) {
+                    setCurrentTime(event.target.getCurrentTime());
+                  }
+                }, 500);
               } else if (event.data === window.YT.PlayerState.PAUSED) {
                 setIsPlaying(false);
+                if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
               } else if (event.data === window.YT.PlayerState.ENDED) {
+                if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
                 handleNext();
               }
             },
@@ -114,6 +128,7 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
     initPlayer();
 
     return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       if (player && player.destroy) {
         try {
           player.destroy();
@@ -179,6 +194,20 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
     }
   };
 
+  const handleSeek = (value) => {
+    if (!player) return;
+    const seekTime = value[0];
+    player.seekTo(seekTime, true);
+    setCurrentTime(seekTime);
+  };
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (!currentSong) {
     return (
       <Card className="bg-stone-100 border-2 border-dashed border-stone-300">
@@ -206,6 +235,21 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
           <div className="font-bold text-lg">{currentSong.song_title}</div>
           <div className="text-sm text-stone-400">
             {currentSong.song_artist} • {currentSong.book_chapter}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-1">
+          <Slider
+            value={[currentTime]}
+            onValueChange={handleSeek}
+            max={duration || 100}
+            step={1}
+            className="cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-stone-400">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -238,6 +282,17 @@ export default function YouTubePlayer({ playlist, currentIndex, onIndexChange })
             >
               <SkipForward className="w-5 h-5" />
             </Button>
+            {onShufflePlaylist && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onShufflePlaylist}
+                className="text-white hover:bg-stone-700"
+                title="Shuffle Playlist"
+              >
+                <Shuffle className="w-5 h-5" />
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
