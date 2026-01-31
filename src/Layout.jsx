@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
         Menu, X, ShoppingCart, BookOpen, Home, Store, 
-        Info, Mail, ChevronDown, Music2, MessageSquare, Bot
+        Info, Mail, ChevronDown, Music2, MessageSquare, Bot, BarChart3, FileText
       } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
@@ -84,9 +84,9 @@ export default function Layout({ children, currentPageName }) {
   const navLinks = [
     { name: 'Home', page: 'Home', icon: Home },
     { name: 'The Book', page: 'TheBook', icon: BookOpen },
-    { name: 'Bible Timeline', page: 'BibleTimeline', icon: BookOpen },
-    { name: 'AI Study', page: 'BibleStudyAI', icon: Bot },
-    { name: 'Take a Quiz', page: 'Quiz', icon: BookOpen },
+    { name: 'Bible Timeline', page: 'BibleTimeline', icon: BarChart3 },
+    { name: 'Jesus AI Bot', page: 'BibleStudyAI', icon: Bot },
+    { name: 'Take a Quiz', page: 'Quiz', icon: FileText },
     { name: 'Music', page: 'Music', icon: Music2 },
     { name: 'Forums', page: 'Forums', icon: MessageSquare },
     { name: 'Store', page: 'Store', icon: Store },
