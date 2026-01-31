@@ -1,4 +1,5 @@
 import React from 'react';
+import AlbumAnnouncementPopup from '@/components/homepage/AlbumAnnouncementPopup';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -77,6 +78,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      <AlbumAnnouncementPopup />
       {/* Featured Song Buttons */}
       <FeaturedSongButtons />
 
