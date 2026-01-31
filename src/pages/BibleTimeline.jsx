@@ -10,6 +10,9 @@ import { base44 } from '@/api/base44Client';
 import EraSection from '@/components/bible/EraSection';
 import SuggestSongModal from '@/components/bible/SuggestSongModal';
 import TagFilter from '@/components/tags/TagFilter';
+import BiblicalMapViewer from '@/components/bible/BiblicalMapViewer';
+import FamilyTreeViewer from '@/components/bible/FamilyTreeViewer';
+import ProphecyTimeline from '@/components/bible/ProphecyTimeline';
 
 export default function BibleTimeline() {
   const [userId, setUserId] = useState(null);
@@ -36,18 +39,19 @@ export default function BibleTimeline() {
 
   const { data: chapters = [], isLoading } = useQuery({
     queryKey: ['bibleChapters'],
-    queryFn: () => base44.entities.BibleChapter.list('chronological_order', 1500)
+    queryFn: () => base44.entities.BibleChapter.list('chronological_order', 1500),
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes for better performance
   });
 
-  // Get all unique tags from chapters
+  // Get all unique tags from chapters (optimized)
   const allTags = useMemo(() => {
-    const tags = [];
+    const tagSet = new Set();
     chapters.forEach(chapter => {
       if (chapter.key_themes && Array.isArray(chapter.key_themes)) {
-        tags.push(...chapter.key_themes);
+        chapter.key_themes.forEach(tag => tagSet.add(tag));
       }
     });
-    return tags;
+    return Array.from(tagSet);
   }, [chapters]);
 
   // Filter chapters
@@ -142,51 +146,56 @@ export default function BibleTimeline() {
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-3">
               Biblical Timeline
             </h1>
-            <p className="text-amber-200/80 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="text-amber-200/80 text-base md:text-lg max-w-2xl mx-auto mb-4">
               Journey through 4,000 years of biblical history in chronological order
             </p>
+            <div className="flex justify-center gap-4 text-sm text-amber-200/70">
+              <span>📖 {chapters.length} Chapters</span>
+              <span>•</span>
+              <span>🎵 {chaptersWithMusic} with Music</span>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Visual Timeline */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8">
-          <h2 className="text-2xl font-serif font-bold text-stone-800 mb-6 text-center">Historical Timeline</h2>
-          <div className="relative">
-            {/* Timeline Line */}
-            <div className="absolute left-0 right-0 top-1/2 h-1 bg-gradient-to-r from-purple-200 via-amber-200 to-violet-200" />
-            
-            {/* Timeline Points */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* Interactive Visualizations */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        {/* Compact Historical Timeline */}
+        <div className="bg-white rounded-3xl shadow-xl p-6">
+          <h2 className="text-xl font-serif font-bold text-stone-800 mb-4 text-center">4,000 Years of Biblical History</h2>
+          <div className="overflow-x-auto pb-4">
+            <div className="flex items-center gap-2 min-w-max">
               {timelineData.map((item, index) => (
                 <motion.div
                   key={item.era}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                  className="relative"
+                  transition={{ delay: index * 0.03 }}
+                  className="flex-shrink-0 w-28"
                 >
-                  <div className={`bg-gradient-to-br ${item.color} rounded-2xl p-4 shadow-lg text-white relative z-10`}>
-                    <div className="text-center">
-                      <div className="font-bold text-sm mb-1">{item.era}</div>
-                      <div className="text-xs opacity-90">{item.period}</div>
-                      <div className="text-xs opacity-75 mt-1">{item.dateRange}</div>
-                      {chaptersByEra[item.era] && (
-                        <Badge className="mt-2 bg-white/20 text-white border-white/30">
-                          {chaptersByEra[item.era].length} chapters
-                        </Badge>
-                      )}
-                    </div>
+                  <div className={`bg-gradient-to-br ${item.color} rounded-xl p-3 shadow-md text-white text-center hover:shadow-lg transition-shadow cursor-pointer`}>
+                    <div className="font-bold text-xs mb-1">{item.era}</div>
+                    <div className="text-[10px] opacity-90">{item.period}</div>
+                    {chaptersByEra[item.era] && (
+                      <Badge className="mt-1 bg-white/20 text-white border-white/30 text-[10px] px-1">
+                        {chaptersByEra[item.era].length}
+                      </Badge>
+                    )}
                   </div>
-                  {/* Connection dot to timeline */}
-                  <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-gradient-to-br ${item.color} border-4 border-white z-20`} />
                 </motion.div>
               ))}
             </div>
           </div>
         </div>
+
+        {/* Interactive Visualizations Grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <BiblicalMapViewer />
+          <FamilyTreeViewer />
+        </div>
+
+        <ProphecyTimeline />
       </section>
 
       {/* Filters */}
