@@ -1,34 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Music2, Play } from 'lucide-react';
+import { X, Music2, Play, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function AlbumAnnouncementPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [canClose, setCanClose] = useState(false);
+  const [activePopup, setActivePopup] = useState(null);
+
+  const { data: popups = [] } = useQuery({
+    queryKey: ['activePromotionalPopups'],
+    queryFn: async () => {
+      const allPopups = await base44.entities.PromotionalPopup.filter({ is_active: true }, '-priority', 10);
+      
+      // Filter by date range
+      const now = new Date();
+      return allPopups.filter(popup => {
+        if (popup.start_date && new Date(popup.start_date) > now) return false;
+        if (popup.end_date && new Date(popup.end_date) < now) return false;
+        return true;
+      });
+    }
+  });
 
   useEffect(() => {
-    // Check if popup was shown today
-    const lastShown = localStorage.getItem('albumAnnouncementLastShown');
-    const today = new Date().toDateString();
+    if (popups.length === 0) return;
 
-    if (lastShown !== today) {
-      // Show popup after a brief delay
-      setTimeout(() => setIsVisible(true), 500);
-      
-      // Allow closing after 3 seconds
-      setTimeout(() => setCanClose(true), 3000);
-      
-      // Mark as shown today
-      localStorage.setItem('albumAnnouncementLastShown', today);
+    // Get highest priority popup
+    const popup = popups[0];
+    setActivePopup(popup);
+
+    // Check if popup should be shown based on frequency
+    const storageKey = `popup_${popup.id}_lastShown`;
+    const lastShown = localStorage.getItem(storageKey);
+    
+    let shouldShow = false;
+    
+    switch (popup.show_frequency) {
+      case 'once_per_day':
+        shouldShow = lastShown !== new Date().toDateString();
+        break;
+      case 'once_per_session':
+        shouldShow = !sessionStorage.getItem(storageKey);
+        break;
+      case 'once_ever':
+        shouldShow = !lastShown;
+        break;
+      case 'always':
+        shouldShow = true;
+        break;
+      default:
+        shouldShow = false;
     }
-  }, []);
+
+    if (shouldShow) {
+      const delay = (popup.delay_seconds || 0.5) * 1000;
+      const minCloseTime = (popup.min_close_time || 3) * 1000;
+
+      setTimeout(() => setIsVisible(true), delay);
+      setTimeout(() => setCanClose(true), delay + minCloseTime);
+      
+      // Mark as shown
+      if (popup.show_frequency === 'once_per_day' || popup.show_frequency === 'once_ever') {
+        localStorage.setItem(storageKey, new Date().toDateString());
+      }
+      if (popup.show_frequency === 'once_per_session') {
+        sessionStorage.setItem(storageKey, 'true');
+      }
+    }
+  }, [popups]);
 
   const handleClose = () => {
     if (canClose) {
       setIsVisible(false);
     }
   };
+
+  if (!activePopup) return null;
 
   return (
     <AnimatePresence>
@@ -64,13 +114,19 @@ export default function AlbumAnnouncementPopup() {
                 </motion.button>
               )}
 
-              {/* Album Cover */}
+              {/* Cover Image */}
               <div className="relative aspect-square md:aspect-video overflow-hidden">
-                <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696bc87ced3165f403f5ebd9/4de5ca6c2_image97.jpg"
-                  alt="Kings and Judges Album Cover"
-                  className="w-full h-full object-cover"
-                />
+                {activePopup.image_url ? (
+                  <img
+                    src={activePopup.image_url}
+                    alt={activePopup.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-amber-900 to-stone-900 flex items-center justify-center">
+                    <Music2 className="w-24 h-24 text-white/40" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
               </div>
 
@@ -84,45 +140,85 @@ export default function AlbumAnnouncementPopup() {
                   <div className="flex items-center gap-2 mb-3">
                     <Music2 className="w-5 h-5 text-amber-400" />
                     <span className="text-amber-400 font-semibold text-sm uppercase tracking-wide">
-                      New Album Release
+                      {activePopup.popup_type.replace('_', ' ')}
                     </span>
                   </div>
 
                   <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-3">
-                    Kings and Judges
+                    {activePopup.title}
                   </h2>
 
-                  <p className="text-white/90 text-lg md:text-xl mb-2">
-                    GoodGodMusics
-                  </p>
+                  {activePopup.subtitle && (
+                    <p className="text-white/90 text-lg md:text-xl mb-2">
+                      {activePopup.subtitle}
+                    </p>
+                  )}
 
-                  <p className="text-amber-300 font-bold text-xl md:text-2xl mb-6">
-                    Coming February 7th, 2026
-                  </p>
+                  {activePopup.announcement_text && (
+                    <p className="text-amber-300 font-bold text-xl md:text-2xl mb-3">
+                      {activePopup.announcement_text}
+                    </p>
+                  )}
+
+                  {activePopup.description && (
+                    <p className="text-white/80 text-sm md:text-base mb-6">
+                      {activePopup.description}
+                    </p>
+                  )}
 
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <a
-                      href="https://youtube.com/@goodgodmusics"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
-                        <Play className="w-5 h-5 mr-2 fill-white" />
-                        Listen on YouTube
-                      </Button>
-                    </a>
-                    <a
-                      href="https://open.spotify.com/artist/goodgodmusics"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
-                        <Music2 className="w-5 h-5 mr-2" />
-                        Stream on Spotify
-                      </Button>
-                    </a>
+                    {activePopup.youtube_link && (
+                      <a
+                        href={activePopup.youtube_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
+                          <Play className="w-5 h-5 mr-2 fill-white" />
+                          YouTube
+                        </Button>
+                      </a>
+                    )}
+                    {activePopup.spotify_link && (
+                      <a
+                        href={activePopup.spotify_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
+                          <Music2 className="w-5 h-5 mr-2" />
+                          Spotify
+                        </Button>
+                      </a>
+                    )}
+                    {activePopup.custom_link_1_url && activePopup.custom_link_1_label && (
+                      <a
+                        href={activePopup.custom_link_1_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
+                          <ExternalLink className="w-5 h-5 mr-2" />
+                          {activePopup.custom_link_1_label}
+                        </Button>
+                      </a>
+                    )}
+                    {activePopup.custom_link_2_url && activePopup.custom_link_2_label && (
+                      <a
+                        href={activePopup.custom_link_2_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1"
+                      >
+                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-lg py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
+                          <ExternalLink className="w-5 h-5 mr-2" />
+                          {activePopup.custom_link_2_label}
+                        </Button>
+                      </a>
+                    )}
                   </div>
                 </motion.div>
               </div>
