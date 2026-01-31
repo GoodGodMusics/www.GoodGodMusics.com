@@ -121,6 +121,10 @@ export default function UserProfile() {
 
   const activeBanner = user?.motivational_banners?.[user?.active_banner_index || 0];
 
+  // Get tab from URL query param
+  const urlParams = new URLSearchParams(window.location.search);
+  const defaultTab = urlParams.get('tab') || 'quizzes';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30">
       {/* Active Banner Background */}
@@ -241,64 +245,73 @@ export default function UserProfile() {
           <MotivationalBannerGenerator user={user} />
         </motion.div>
 
+        {/* Playlists Section - Permanent and Prominent */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="mb-8"
+        >
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                  <Music2 className="w-6 h-6 text-white" />
+                </div>
+                My Playlists
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PlaylistManager userEmail={user?.email} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Main Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Tabs defaultValue="quizzes" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
-              <TabsTrigger value="playlists" className="rounded-lg">
-                <Music2 className="w-4 h-4 mr-2" />
-                Playlists
-              </TabsTrigger>
+          <Tabs defaultValue={defaultTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-9 mb-8 bg-white/80 backdrop-blur-sm p-1 rounded-xl">
               <TabsTrigger value="badges" className="rounded-lg">
-                <Trophy className="w-4 h-4 mr-2" />
-                Badges
+                <Trophy className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Badges</span>
               </TabsTrigger>
               <TabsTrigger value="friends" className="rounded-lg">
-                <Users className="w-4 h-4 mr-2" />
-                Friends
+                <Users className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Friends</span>
               </TabsTrigger>
               <TabsTrigger value="quizzes" className="rounded-lg">
-                <Brain className="w-4 h-4 mr-2" />
-                Quizzes
+                <Brain className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Quizzes</span>
               </TabsTrigger>
               <TabsTrigger value="charity" className="rounded-lg">
-                <Heart className="w-4 h-4 mr-2" />
-                Charity
+                <Heart className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Charity</span>
               </TabsTrigger>
               <TabsTrigger value="character" className="rounded-lg">
-                <User className="w-4 h-4 mr-2" />
-                Character
+                <User className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Character</span>
               </TabsTrigger>
               <TabsTrigger value="history" className="rounded-lg">
-                <Clock className="w-4 h-4 mr-2" />
-                History
+                <Clock className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">History</span>
               </TabsTrigger>
               <TabsTrigger value="suggestions" className="rounded-lg">
-                <Music2 className="w-4 h-4 mr-2" />
-                Suggestions
+                <Music2 className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Songs</span>
               </TabsTrigger>
               <TabsTrigger value="comments" className="rounded-lg">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Comments
+                <MessageSquare className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Comments</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="rounded-lg">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+                <Settings className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Settings</span>
               </TabsTrigger>
             </TabsList>
-
-            {/* Playlists Tab */}
-            <TabsContent value="playlists">
-              <Card className="bg-white/80 backdrop-blur-sm border-amber-900/10">
-                <CardContent className="p-6">
-                  <PlaylistManager userEmail={user?.email} />
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Badges Tab */}
             <TabsContent value="badges">

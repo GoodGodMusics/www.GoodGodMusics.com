@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import YouTubePlayer from './YouTubePlayer';
 
 export default function PlaylistManager({ userEmail }) {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
@@ -20,6 +21,7 @@ export default function PlaylistManager({ userEmail }) {
   const [editingName, setEditingName] = useState(null);
   const [newName, setNewName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const queryClient = useQueryClient();
 
   // Fetch user's playlists
@@ -252,65 +254,83 @@ export default function PlaylistManager({ userEmail }) {
         </div>
       )}
 
-      {/* Selected Playlist Details */}
+      {/* Selected Playlist with Player */}
       {selectedPlaylist && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music2 className="w-5 h-5 text-purple-600" />
-              {selectedPlaylist.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedPlaylist.songs?.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-stone-600 mb-4">No songs in this playlist yet</p>
-                <Button onClick={() => setShowAddSongsModal(true)} className="bg-purple-600 hover:bg-purple-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Song
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {selectedPlaylist.songs.map((song, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <GripVertical className="w-4 h-4 text-stone-400" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-stone-800">{song.song_title}</div>
-                        <div className="text-sm text-stone-600">
-                          {song.song_artist} • {song.book_chapter}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* YouTube Player */}
+          <div>
+            <YouTubePlayer
+              playlist={selectedPlaylist.songs || []}
+              currentIndex={currentSongIndex}
+              onIndexChange={setCurrentSongIndex}
+            />
+          </div>
+
+          {/* Playlist Queue */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Music2 className="w-5 h-5 text-purple-600" />
+                {selectedPlaylist.name} Queue
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedPlaylist.songs?.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-stone-600 mb-4">No songs in this playlist yet</p>
+                  <Button onClick={() => setShowAddSongsModal(true)} className="bg-purple-600 hover:bg-purple-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Your First Song
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                  {selectedPlaylist.songs.map((song, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-colors cursor-pointer ${
+                        currentSongIndex === index 
+                          ? 'bg-purple-100 border-2 border-purple-500' 
+                          : 'bg-stone-50 hover:bg-stone-100'
+                      }`}
+                      onClick={() => setCurrentSongIndex(index)}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-stone-200 text-stone-600 text-sm font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-stone-800">{song.song_title}</div>
+                          <div className="text-sm text-stone-600">
+                            {song.song_artist} • {song.book_chapter}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {song.youtube_link && (
-                        <a href={song.youtube_link} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" variant="ghost" className="text-red-600">
-                            <Play className="w-4 h-4" />
-                          </Button>
-                        </a>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveSong(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      <div className="flex gap-2">
+                        {currentSongIndex === index && (
+                          <Badge className="bg-purple-600">Now Playing</Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveSong(index);
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Create Playlist Modal */}

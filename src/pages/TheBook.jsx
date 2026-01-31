@@ -171,7 +171,7 @@ export default function TheBook() {
                   </h2>
 
                   {/* Chapter Links - Compact Grid */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(60px,1fr))] gap-2">
                     {chaptersByBook[bookName].map((chapter, chapterIndex) => (
                       <motion.a
                         key={chapter.id}
@@ -188,8 +188,8 @@ export default function TheBook() {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         className={`
-                          group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                          transition-all duration-300
+                          group relative flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg
+                          transition-all duration-300 min-h-[50px]
                           ${chapter.youtube_link 
                             ? 'bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md hover:shadow-xl' 
                             : 'bg-stone-200/80 text-stone-500 cursor-not-allowed pointer-events-none'
@@ -201,7 +201,7 @@ export default function TheBook() {
                           boxShadow: chapter.youtube_link ? '0 2px 8px rgba(180, 83, 9, 0.2)' : 'none'
                         }}
                       >
-                        <span className="font-semibold">{chapter.chapter_number}</span>
+                        <span className="font-semibold text-base">{chapter.chapter_number}</span>
                         {chapter.youtube_link && (
                           <>
                             <Play className="w-3 h-3 fill-current opacity-80 group-hover:opacity-100" />
