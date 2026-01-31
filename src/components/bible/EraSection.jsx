@@ -80,14 +80,7 @@ export default function EraSection({ era, chapters, onSuggestSong }) {
           </motion.div>
         </motion.button>
 
-        {/* Read Era Button */}
-        <Button
-          onClick={() => handleOpenReader(chapters[0])}
-          className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 rounded-2xl shadow-lg"
-          title="Read this era's chapters"
-        >
-          <BookOpen className="w-5 h-5" />
-        </Button>
+
       </div>
 
       {/* Chapters Grid */}

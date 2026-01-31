@@ -10,6 +10,7 @@ import { base44 } from '@/api/base44Client';
 import EraSection from '@/components/bible/EraSection';
 import SuggestSongModal from '@/components/bible/SuggestSongModal';
 import TagFilter from '@/components/tags/TagFilter';
+import BibleReaderModal from '@/components/bible/BibleReaderModal';
 
 export default function BibleTimeline() {
   const [userId, setUserId] = useState(null);
@@ -33,6 +34,8 @@ export default function BibleTimeline() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [selectedEra, setSelectedEra] = useState(null);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
 
   const { data: chapters = [], isLoading } = useQuery({
     queryKey: ['bibleChapters'],
@@ -118,6 +121,12 @@ export default function BibleTimeline() {
     setIsSuggestModalOpen(true);
   };
 
+  const handleReadEra = (era, chapters) => {
+    setSelectedEra({ era, chapters });
+    setSelectedChapter(chapters[0]);
+    setIsReaderOpen(true);
+  };
+
   const chaptersWithMusic = chapters.filter(c => c.youtube_link).length;
 
   return (
@@ -168,18 +177,30 @@ export default function BibleTimeline() {
                   transition={{ delay: index * 0.05 }}
                   className="relative"
                 >
-                  <div className={`bg-gradient-to-br ${item.color} rounded-2xl p-4 shadow-lg text-white relative z-10`}>
+                  <motion.button
+                    onClick={() => chaptersByEra[item.era] && handleReadEra(item.era, chaptersByEra[item.era])}
+                    disabled={!chaptersByEra[item.era]}
+                    className={`w-full bg-gradient-to-br ${item.color} rounded-2xl p-4 shadow-lg text-white relative z-10 transition-all ${chaptersByEra[item.era] ? 'hover:scale-105 hover:shadow-xl cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                    whileHover={chaptersByEra[item.era] ? { scale: 1.05 } : {}}
+                    whileTap={chaptersByEra[item.era] ? { scale: 0.98 } : {}}
+                  >
                     <div className="text-center">
                       <div className="font-bold text-sm mb-1">{item.era}</div>
                       <div className="text-xs opacity-90">{item.period}</div>
                       <div className="text-xs opacity-75 mt-1">{item.dateRange}</div>
                       {chaptersByEra[item.era] && (
-                        <Badge className="mt-2 bg-white/20 text-white border-white/30">
-                          {chaptersByEra[item.era].length} chapters
-                        </Badge>
+                        <>
+                          <Badge className="mt-2 bg-white/20 text-white border-white/30">
+                            {chaptersByEra[item.era].length} chapters
+                          </Badge>
+                          <div className="flex items-center justify-center gap-1 mt-2 text-xs font-semibold">
+                            <BookOpen className="w-3 h-3" />
+                            Read
+                          </div>
+                        </>
                       )}
                     </div>
-                  </div>
+                  </motion.button>
                   {/* Connection dot to timeline */}
                   <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-gradient-to-br ${item.color} border-4 border-white z-20`} />
                 </motion.div>
@@ -295,6 +316,20 @@ export default function BibleTimeline() {
           setSelectedChapter(null);
         }}
       />
+
+      {/* Bible Reader from Timeline */}
+      {selectedEra && (
+        <BibleReaderModal
+          isOpen={isReaderOpen}
+          onClose={() => {
+            setIsReaderOpen(false);
+            setSelectedEra(null);
+            setSelectedChapter(null);
+          }}
+          chapter={selectedChapter}
+          eraChapters={selectedEra.chapters}
+        />
+      )}
 
     </div>
   );

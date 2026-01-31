@@ -26,6 +26,7 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const [speechVolume, setSpeechVolume] = useState(1.0);
   const [isMuted, setIsMuted] = useState(false);
   const [voiceGender, setVoiceGender] = useState('female');
+  const [currentSpeakingText, setCurrentSpeakingText] = useState(null);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
@@ -159,13 +160,16 @@ Format the response as follows:
     stopSpeech(); // Stop any ongoing speech
 
     const text = textToSpeak || bibleText;
+    setCurrentSpeakingText(text); // Store for resume functionality
 
     // Use ResponsiveVoice if available (more reliable)
     if (useResponsiveVoice && window.responsiveVoice) {
-      const voiceName = voiceGender === 'female' ? 'US English Female' : 'US English Male';
+      const voiceName = voiceGender === 'female' 
+        ? 'UK English Female' // Softer, more natural female voice
+        : 'UK English Male'; // Warm, deep male voice
       const params = {
         rate: speechRate,
-        pitch: 1,
+        pitch: voiceGender === 'female' ? 1.05 : 0.9, // Slightly higher pitch for female, lower for male warmth
         volume: isMuted ? 0 : speechVolume,
         onstart: () => {
           setIsSpeaking(true);
@@ -241,6 +245,12 @@ Format the response as follows:
   };
 
   const togglePauseResume = () => {
+    // If not speaking but was paused, resume from stored text
+    if (!isSpeaking && currentSpeakingText) {
+      startSpeech(currentSpeakingText);
+      return;
+    }
+
     if (!isSpeaking) return;
 
     // ResponsiveVoice pause/resume
@@ -275,10 +285,21 @@ Format the response as follows:
     } else if (isMuted) {
       setIsMuted(false);
     }
+    
+    // Immediate refresh: if already speaking, restart with new volume
+    if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
+      window.responsiveVoice.setVolume(newVolume);
+    }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    const newMutedState = !isMuted;
+    setIsMuted(newMutedState);
+    
+    // Immediate refresh: apply mute state
+    if (isSpeaking && useResponsiveVoice && window.responsiveVoice) {
+      window.responsiveVoice.setVolume(newMutedState ? 0 : speechVolume);
+    }
   };
 
   const handleTextClick = (clickedText) => {
@@ -378,11 +399,11 @@ Format the response as follows:
           <div className="flex items-center gap-3 flex-wrap">
             <Button
               onClick={() => startSpeech()}
-              disabled={loading || !bibleText || isSpeaking}
+              disabled={loading || !bibleText}
               className="bg-amber-600 hover:bg-amber-700"
             >
               <Volume2 className="w-4 h-4 mr-2" />
-              Read Aloud
+              {isSpeaking ? 'Reading...' : 'Read Aloud'}
             </Button>
 
             {isSpeaking && (
@@ -442,13 +463,23 @@ Format the response as follows:
             {/* Voice Settings */}
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4 text-stone-600" />
-              <Select value={voiceGender} onValueChange={setVoiceGender}>
+              <Select 
+                value={voiceGender} 
+                onValueChange={(newGender) => {
+                  setVoiceGender(newGender);
+                  // If currently speaking, restart with new voice
+                  if (isSpeaking && currentSpeakingText) {
+                    stopSpeech();
+                    setTimeout(() => startSpeech(currentSpeakingText), 100);
+                  }
+                }}
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="female">Female Voice</SelectItem>
-                  <SelectItem value="male">Male Voice</SelectItem>
+                  <SelectItem value="female">Soft Female</SelectItem>
+                  <SelectItem value="male">Deep Male</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -470,8 +501,8 @@ Format the response as follows:
           </div>
 
           <p className="text-xs text-stone-500">
-            Click any verse to start reading from that point. Volume, voice, and speed settings are saved automatically.
-            {useResponsiveVoice && <span className="text-amber-600 font-semibold"> • Enhanced voice quality active</span>}
+            Click any verse to start reading from that point. Press Play to continue from highlighted text. Settings are saved automatically.
+            {useResponsiveVoice && <span className="text-amber-600 font-semibold"> • Premium voice quality active</span>}
           </p>
         </div>
 
