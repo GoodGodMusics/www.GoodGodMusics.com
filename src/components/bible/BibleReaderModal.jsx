@@ -136,12 +136,9 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
     const text = parsedVerses[index];
     setCurrentVerseIndex(index);
 
-    const onVerseEnd = () => {
-      // Small delay between verses for better clarity
-      setTimeout(() => speakVerse(index + 1), 100);
-    };
-
     if (!window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel(); // Clear any pending speech
 
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice();
@@ -152,18 +149,28 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
     
     utterance.rate = speechRate;
     utterance.pitch = 1.0;
-    utterance.volume = 0.8; // Standard volume
+    utterance.volume = 0.8;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
       setIsPaused(false);
     };
 
-    utterance.onend = onVerseEnd;
+    utterance.onend = () => {
+      // Move to next verse only after current completes
+      if (index < parsedVerses.length - 1) {
+        speakVerse(index + 1);
+      } else {
+        setIsSpeaking(false);
+        setIsPaused(false);
+        setCurrentVerseIndex(-1);
+      }
+    };
 
     utterance.onerror = (event) => {
       console.error('Speech error:', event);
-      onVerseEnd();
+      setIsSpeaking(false);
+      setCurrentVerseIndex(-1);
     };
 
     window.speechSynthesis.speak(utterance);
@@ -172,8 +179,7 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const startSpeech = (startIndex = 0) => {
     if (!parsedVerses.length || loading) return;
     stopSpeech();
-    // Start immediately without delay
-    speakVerse(startIndex);
+    setTimeout(() => speakVerse(startIndex), 50);
   };
 
   const stopSpeech = () => {
@@ -187,13 +193,15 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   };
 
   const togglePauseResume = () => {
-    if (!isSpeaking || !window.speechSynthesis) return;
+    if (!window.speechSynthesis) return;
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    if (isPaused) {
+      // Resume from current verse beginning
       setIsPaused(false);
-    } else {
-      window.speechSynthesis.pause();
+      speakVerse(currentVerseIndex);
+    } else if (isSpeaking) {
+      // Pause
+      window.speechSynthesis.cancel();
       setIsPaused(true);
     }
   };

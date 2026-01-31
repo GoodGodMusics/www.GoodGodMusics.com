@@ -5,6 +5,7 @@ import {
   Calendar, MapPin, Clock, Download, AlertCircle, Zap,
   Activity, Target, Globe
 } from 'lucide-react';
+import OptimizationEngine from '@/components/admin/OptimizationEngine';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -574,6 +575,9 @@ export default function AdminAnalytics() {
 
           {/* Optimization Tab */}
           <TabsContent value="optimization" className="space-y-6">
+            {/* Optimization Engine */}
+            <OptimizationEngine />
+
             <Card>
               <CardHeader>
                 <CardTitle>AI-Powered SWOT Analysis</CardTitle>
@@ -629,84 +633,6 @@ export default function AdminAnalytics() {
                         <li>• Credit costs rising with user base growth</li>
                         <li>• Need better mobile optimization for younger users</li>
                       </ul>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Cost Reduction Recommendations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-white border border-stone-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <DollarSign className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-stone-800 mb-2">✓ Era Images Cached</h4>
-                        <p className="text-sm text-stone-600 mb-2">
-                          Timeline images stored in localStorage - no regeneration needed.
-                          <span className="font-bold text-green-600"> Status: Active</span>
-                        </p>
-                        <div className="flex gap-2">
-                          <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">✓ Applied</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white border border-stone-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <Zap className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-stone-800 mb-2">✓ LLM Prompts Optimized</h4>
-                        <p className="text-sm text-stone-600 mb-2">
-                          Streamlined Bible text prompts, added response caching.
-                          <span className="font-bold text-green-600"> Status: Active</span>
-                        </p>
-                        <div className="flex gap-2">
-                          <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">✓ Applied</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white border border-stone-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <Activity className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-stone-800 mb-2">✓ Audio System Streamlined</h4>
-                        <p className="text-sm text-stone-600 mb-2">
-                          Removed unnecessary controls, improved playback speed and latency.
-                          <span className="font-bold text-green-600"> Status: Active</span>
-                        </p>
-                        <div className="flex gap-2">
-                          <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">✓ Applied</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 p-6 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg text-white">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                      <p className="text-sm opacity-90 mb-1">Optimization Status</p>
-                      <p className="text-3xl font-bold">Auto-Optimized</p>
-                      <p className="text-xs opacity-80 mt-1">Era images cached • Prompts streamlined</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm opacity-90 mb-1">Est. Monthly Credits</p>
-                      <p className="text-2xl font-bold">{Math.round(totalCreditsUsed * 1.2).toLocaleString()}</p>
-                      <p className="text-xs opacity-80 mt-1">Current consumption rate</p>
                     </div>
                   </div>
                 </div>
