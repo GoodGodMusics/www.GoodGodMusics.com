@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, BookMarked, Scroll } from 'lucide-react';
+import { ChevronDown, BookMarked, Scroll, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ChapterCard from './ChapterCard';
+import BibleReaderModal from './BibleReaderModal';
 
 export default function EraSection({ era, chapters, onSuggestSong }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState(null);
 
   const eraIcons = {
     'Creation': '🌍',
@@ -24,6 +28,11 @@ export default function EraSection({ era, chapters, onSuggestSong }) {
     'Apocalypse': '🌟'
   };
 
+  const handleOpenReader = (chapter) => {
+    setSelectedChapter(chapter);
+    setIsReaderOpen(true);
+  };
+
   return (
     <motion.div 
       className="mb-6"
@@ -31,44 +40,55 @@ export default function EraSection({ era, chapters, onSuggestSong }) {
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Era Header */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          w-full flex items-center justify-between p-6
-          bg-gradient-to-r from-stone-800 via-stone-700 to-stone-800
-          hover:from-stone-700 hover:via-stone-600 hover:to-stone-700
-          rounded-2xl transition-all duration-300
-          border border-amber-900/20
-          shadow-lg shadow-stone-900/20
-          group
-        `}
-        whileHover={{ scale: 1.005 }}
-        whileTap={{ scale: 0.995 }}
-      >
-        <div className="flex items-center gap-4">
-          {/* Era Icon */}
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">
-            {eraIcons[era] || <Scroll className="w-6 h-6 text-white" />}
-          </div>
-          
-          <div className="text-left">
-            <h2 className="text-xl md:text-2xl font-serif font-bold text-amber-100 group-hover:text-amber-50 transition-colors">
-              {era}
-            </h2>
-            <p className="text-amber-200/60 text-sm">
-              {chapters.length} chapter{chapters.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        </div>
-
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-          className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center"
+      <div className="flex items-stretch gap-3">
+        <motion.button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`
+            flex-1 flex items-center justify-between p-6
+            bg-gradient-to-r from-stone-800 via-stone-700 to-stone-800
+            hover:from-stone-700 hover:via-stone-600 hover:to-stone-700
+            rounded-2xl transition-all duration-300
+            border border-amber-900/20
+            shadow-lg shadow-stone-900/20
+            group
+          `}
+          whileHover={{ scale: 1.005 }}
+          whileTap={{ scale: 0.995 }}
         >
-          <ChevronDown className="w-6 h-6 text-amber-300" />
-        </motion.div>
-      </motion.button>
+          <div className="flex items-center gap-4">
+            {/* Era Icon */}
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/30">
+              {eraIcons[era] || <Scroll className="w-6 h-6 text-white" />}
+            </div>
+            
+            <div className="text-left">
+              <h2 className="text-xl md:text-2xl font-serif font-bold text-amber-100 group-hover:text-amber-50 transition-colors">
+                {era}
+              </h2>
+              <p className="text-amber-200/60 text-sm">
+                {chapters.length} chapter{chapters.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+
+          <motion.div
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center"
+          >
+            <ChevronDown className="w-6 h-6 text-amber-300" />
+          </motion.div>
+        </motion.button>
+
+        {/* Read Era Button */}
+        <Button
+          onClick={() => handleOpenReader(chapters[0])}
+          className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 rounded-2xl shadow-lg"
+          title="Read this era's chapters"
+        >
+          <BookOpen className="w-5 h-5" />
+        </Button>
+      </div>
 
       {/* Chapters Grid */}
       <AnimatePresence>
@@ -91,6 +111,7 @@ export default function EraSection({ era, chapters, onSuggestSong }) {
                   <ChapterCard 
                     chapter={chapter} 
                     onSuggestSong={onSuggestSong}
+                    onReadChapter={handleOpenReader}
                   />
                 </motion.div>
               ))}
@@ -98,6 +119,14 @@ export default function EraSection({ era, chapters, onSuggestSong }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Bible Reader Modal */}
+      <BibleReaderModal
+        isOpen={isReaderOpen}
+        onClose={() => setIsReaderOpen(false)}
+        chapter={selectedChapter}
+        eraChapters={chapters}
+      />
     </motion.div>
   );
 }

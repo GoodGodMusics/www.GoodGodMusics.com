@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Music2, ExternalLink, BookOpen, Heart, BookHeart, Brain } from 'lucide-react';
+import { Play, Music2, ExternalLink, BookOpen, Heart, BookHeart, Brain, Book } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
@@ -10,7 +10,7 @@ import JournalModal from '@/components/bible/JournalModal';
 import BibleQuizModal from '@/components/quiz/BibleQuizModal';
 import AddToPlaylistButton from '@/components/playlists/AddToPlaylistButton';
 
-export default function ChapterCard({ chapter, onSuggestSong }) {
+export default function ChapterCard({ chapter, onSuggestSong, onReadChapter }) {
   const [userId, setUserId] = useState(null);
 
   useEffect(() => {
@@ -208,9 +208,21 @@ export default function ChapterCard({ chapter, onSuggestSong }) {
 
                 {/* Actions */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <LikeDislikeButton chapter={chapter} />
-                    <div className="ml-auto flex gap-2">
+                    <div className="ml-auto flex gap-2 flex-wrap">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReadChapter?.(chapter);
+                        }}
+                      >
+                        <Book className="w-4 h-4 mr-2" />
+                        Read
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
