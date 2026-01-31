@@ -1,22 +1,128 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Music2, Heart, ExternalLink, Play, Calendar, Sparkles } from 'lucide-react';
+import { Music2, Heart, ExternalLink, Play, Calendar, Sparkles, Plus, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import DonationButton from '@/components/ui-custom/DonationButton';
 import ShareButton from '@/components/ui-custom/ShareButton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Music() {
+  const [user, setUser] = useState(null);
+  const [generatingImageFor, setGeneratingImageFor] = useState(null);
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(null);
+  const queryClient = useQueryClient();
+
   const { data: releases = [], isLoading } = useQuery({
     queryKey: ['featuredReleases'],
     queryFn: () => base44.entities.MusicRelease.list('-release_date', 20)
   });
 
+  const { data: userPlaylists = [] } = useQuery({
+    queryKey: ['userPlaylists', user?.email],
+    queryFn: () => base44.entities.UserPlaylist.filter({ user_email: user.email }),
+    enabled: !!user
+  });
+
+  const { data: userInteractions = [] } = useQuery({
+    queryKey: ['userInteractions', user?.email],
+    queryFn: () => base44.entities.UserInteraction.filter({ user_email: user.email }),
+    enabled: !!user
+  });
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        setUser(null);
+      }
+    };
+    checkUser();
+  }, []);
+
   const featuredReleases = releases.filter(r => r.is_featured);
   const recentReleases = releases.slice(0, 6);
   const allReleases = releases;
+
+  const generateImageMutation = useMutation({
+    mutationFn: async (release) => {
+      const prompt = `Create a beautiful Christian worship music album cover for a song titled "${release.title}" by ${release.artist}. ${release.description || ''} Include religious Christian imagery, divine light, crosses, worship themes, peaceful scenes. Style: professional, spiritual, reverent, high quality`;
+      const result = await base44.integrations.Core.GenerateImage({ prompt });
+      return result.url;
+    },
+    onSuccess: (imageUrl, release) => {
+      updateReleaseMutation.mutate({ id: release.id, data: { cover_image_url: imageUrl } });
+    }
+  });
+
+  const updateReleaseMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.MusicRelease.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['featuredReleases'] });
+      setGeneratingImageFor(null);
+    }
+  });
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: async (release) => {
+      const existingLike = userInteractions.find(
+        i => i.interaction_type === 'liked' && i.song_title === release.title
+      );
+      
+      if (existingLike) {
+        await base44.entities.UserInteraction.delete(existingLike.id);
+      } else {
+        await base44.entities.UserInteraction.create({
+          user_email: user.email,
+          interaction_type: 'liked',
+          song_title: release.title,
+          song_artist: release.artist,
+          youtube_link: release.youtube_link
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userInteractions'] });
+    }
+  });
+
+  const addToPlaylistMutation = useMutation({
+    mutationFn: async ({ playlistId, release }) => {
+      const playlist = userPlaylists.find(p => p.id === playlistId);
+      const songData = {
+        chapter_id: release.id,
+        book_chapter: release.title,
+        song_title: release.title,
+        song_artist: release.artist,
+        youtube_link: release.youtube_link
+      };
+      
+      const existingSongs = playlist.songs || [];
+      await base44.entities.UserPlaylist.update(playlistId, {
+        songs: [...existingSongs, songData]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userPlaylists'] });
+      setShowAddToPlaylist(null);
+    }
+  });
+
+  const handleGenerateImage = (release) => {
+    setGeneratingImageFor(release.id);
+    generateImageMutation.mutate(release);
+  };
+
+  const isLiked = (release) => {
+    return userInteractions.some(
+      i => i.interaction_type === 'liked' && i.song_title === release.title
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -131,12 +237,26 @@ export default function Music() {
                   transition={{ delay: index * 0.1 }}
                   className="flex-shrink-0 w-72 snap-center bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 hover:border-white/40 transition-all"
                 >
-                  <div className="relative aspect-square bg-gradient-to-br from-amber-900/50 to-stone-900/50 overflow-hidden">
+                  <div className="relative aspect-square bg-gradient-to-br from-amber-900/50 to-stone-900/50 overflow-hidden group/img">
                     {release.cover_image_url ? (
                       <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music2 className="w-20 h-20 text-white/40" />
+                        {generatingImageFor === release.id ? (
+                          <Loader className="w-12 h-12 text-white/60 animate-spin" />
+                        ) : (
+                          <>
+                            <Music2 className="w-20 h-20 text-white/40" />
+                            <Button
+                              size="sm"
+                              onClick={() => handleGenerateImage(release)}
+                              className="absolute inset-0 m-auto w-32 h-10 bg-white/20 hover:bg-white/30 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                            >
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Generate
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                     <Badge className="absolute top-3 right-3 bg-green-500 text-white border-0">NEW</Badge>
@@ -144,14 +264,36 @@ export default function Music() {
                   <div className="p-4">
                     <h3 className="text-lg font-bold text-white mb-1 line-clamp-1">{release.title}</h3>
                     <p className="text-white/70 text-sm mb-3">{release.artist}</p>
-                    {release.youtube_link && (
-                      <a href={release.youtube_link} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" className="w-full bg-red-600 hover:bg-red-700">
-                          <Play className="w-4 h-4 mr-2 fill-white" />
-                          Listen Now
-                        </Button>
-                      </a>
-                    )}
+                    <div className="flex gap-2">
+                      {release.youtube_link && (
+                        <a href={release.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <Button size="sm" className="w-full bg-red-600 hover:bg-red-700">
+                            <Play className="w-4 h-4 mr-2 fill-white" />
+                            Listen
+                          </Button>
+                        </a>
+                      )}
+                      {user && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleLikeMutation.mutate(release)}
+                            className={`${isLiked(release) ? 'text-red-500' : 'text-white'} hover:text-red-500`}
+                          >
+                            <Heart className={`w-4 h-4 ${isLiked(release) ? 'fill-red-500' : ''}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowAddToPlaylist(release)}
+                            className="text-white hover:text-green-400"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -184,7 +326,7 @@ export default function Music() {
                   transition={{ delay: index * 0.1 }}
                   className="group bg-stone-700/50 backdrop-blur-sm rounded-3xl overflow-hidden border border-stone-600/50 hover:border-amber-500/50 transition-all hover:shadow-2xl hover:shadow-amber-500/20"
                 >
-                  <div className="relative aspect-square bg-gradient-to-br from-amber-900/50 to-stone-900/50 overflow-hidden">
+                  <div className="relative aspect-square bg-gradient-to-br from-amber-900/50 to-stone-900/50 overflow-hidden group/img">
                     {release.cover_image_url ? (
                       <img
                         src={release.cover_image_url}
@@ -193,7 +335,21 @@ export default function Music() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music2 className="w-24 h-24 text-stone-400" />
+                        {generatingImageFor === release.id ? (
+                          <Loader className="w-16 h-16 text-stone-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Music2 className="w-24 h-24 text-stone-400" />
+                            <Button
+                              size="sm"
+                              onClick={() => handleGenerateImage(release)}
+                              className="absolute inset-0 m-auto w-36 h-12 bg-white/20 hover:bg-white/30 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                            >
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Generate Image
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -225,9 +381,9 @@ export default function Music() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       {release.youtube_link && (
-                        <a href={release.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1">
+                        <a href={release.youtube_link} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[100px]">
                           <Button className="w-full bg-red-600 hover:bg-red-700">
                             <Play className="w-4 h-4 mr-2 fill-white" />
                             YouTube
@@ -235,11 +391,31 @@ export default function Music() {
                         </a>
                       )}
                       {release.spotify_link && (
-                        <a href={release.spotify_link} target="_blank" rel="noopener noreferrer" className="flex-1">
+                        <a href={release.spotify_link} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[100px]">
                           <Button variant="outline" className="w-full border-green-500 text-green-400 hover:bg-green-500/10">
                             Spotify
                           </Button>
                         </a>
+                      )}
+                      {user && (
+                        <>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => toggleLikeMutation.mutate(release)}
+                            className={`${isLiked(release) ? 'border-red-500 bg-red-50' : 'border-stone-300'}`}
+                          >
+                            <Heart className={`w-4 h-4 ${isLiked(release) ? 'fill-red-500 text-red-500' : 'text-stone-600'}`} />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => setShowAddToPlaylist(release)}
+                            className="border-stone-300"
+                          >
+                            <Plus className="w-4 h-4 text-stone-600" />
+                          </Button>
+                        </>
                       )}
                       <ShareButton
                         title={`${release.title} - GoodGodMusics`}
@@ -288,7 +464,7 @@ export default function Music() {
                   transition={{ delay: index * 0.05 }}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow group"
                 >
-                  <div className="relative aspect-square bg-gradient-to-br from-stone-100 to-amber-50 overflow-hidden">
+                  <div className="relative aspect-square bg-gradient-to-br from-stone-100 to-amber-50 overflow-hidden group/img">
                     {release.cover_image_url ? (
                       <img
                         src={release.cover_image_url}
@@ -297,7 +473,21 @@ export default function Music() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Music2 className="w-16 h-16 text-stone-300" />
+                        {generatingImageFor === release.id ? (
+                          <Loader className="w-12 h-12 text-stone-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Music2 className="w-16 h-16 text-stone-300" />
+                            <Button
+                              size="sm"
+                              onClick={() => handleGenerateImage(release)}
+                              className="absolute inset-0 m-auto w-28 h-10 bg-stone-800/80 hover:bg-stone-900 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
+                            >
+                              <Sparkles className="w-3 h-3 mr-2" />
+                              Generate
+                            </Button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -325,6 +515,25 @@ export default function Music() {
                             <Play className="w-3 h-3 fill-white" />
                           </Button>
                         </a>
+                      )}
+                      {user && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleLikeMutation.mutate(release)}
+                            className={`${isLiked(release) ? 'text-red-500' : ''}`}
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked(release) ? 'fill-red-500' : ''}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowAddToPlaylist(release)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </>
                       )}
                       <ShareButton
                         title={`${release.title} - GoodGodMusics`}
@@ -368,6 +577,50 @@ export default function Music() {
           </div>
         </motion.div>
       </section>
+
+      {/* Add to Playlist Modal */}
+      <Dialog open={!!showAddToPlaylist} onOpenChange={() => setShowAddToPlaylist(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Playlist</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {userPlaylists.length === 0 ? (
+              <div className="text-center py-8 text-stone-600">
+                <p>You don't have any playlists yet.</p>
+                <p className="text-sm mt-2">Create a playlist from your profile to add songs.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-stone-600">
+                  Select a playlist to add "{showAddToPlaylist?.title}"
+                </p>
+                <div className="space-y-2">
+                  {userPlaylists.map((playlist) => {
+                    const alreadyAdded = playlist.songs?.some(s => s.song_title === showAddToPlaylist?.title);
+                    return (
+                      <Button
+                        key={playlist.id}
+                        variant="outline"
+                        className="w-full justify-between"
+                        onClick={() => addToPlaylistMutation.mutate({ playlistId: playlist.id, release: showAddToPlaylist })}
+                        disabled={alreadyAdded}
+                      >
+                        <span>{playlist.name}</span>
+                        {alreadyAdded ? (
+                          <Badge variant="secondary">Added</Badge>
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
