@@ -128,7 +128,8 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   };
 
   const speakVerse = (index) => {
-    if (index >= parsedVerses.length || index < 0) {
+    if (index >= parsedVerses.length || index < 0 || !isSpeakingRef.current) {
+      isSpeakingRef.current = false;
       setIsSpeaking(false);
       setIsPaused(false);
       setCurrentVerseIndex(-1);
@@ -139,8 +140,6 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
     setCurrentVerseIndex(index);
 
     if (!window.speechSynthesis) return;
-
-    window.speechSynthesis.cancel(); // Clear any pending speech
 
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice();
@@ -159,20 +158,16 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
     };
 
     utterance.onend = () => {
-      // Move to next verse only after current completes
-      if (index < parsedVerses.length - 1) {
+      if (isSpeakingRef.current) {
         speakVerse(index + 1);
-      } else {
-        setIsSpeaking(false);
-        setIsPaused(false);
-        setCurrentVerseIndex(-1);
       }
     };
 
     utterance.onerror = (event) => {
       console.error('Speech error:', event);
-      setIsSpeaking(false);
-      setCurrentVerseIndex(-1);
+      if (isSpeakingRef.current) {
+        speakVerse(index + 1);
+      }
     };
 
     window.speechSynthesis.speak(utterance);
@@ -181,10 +176,12 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
   const startSpeech = (startIndex = 0) => {
     if (!parsedVerses.length || loading) return;
     stopSpeech();
+    isSpeakingRef.current = true;
     setTimeout(() => speakVerse(startIndex), 50);
   };
 
   const stopSpeech = () => {
+    isSpeakingRef.current = false;
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -192,19 +189,23 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
     setIsSpeaking(false);
     setIsPaused(false);
     setCurrentVerseIndex(-1);
+    setPausedVerseIndex(-1);
   };
 
   const togglePauseResume = () => {
     if (!window.speechSynthesis) return;
 
     if (isPaused) {
-      // Resume from current verse beginning
+      // Resume from the paused verse beginning
       setIsPaused(false);
-      speakVerse(currentVerseIndex);
+      isSpeakingRef.current = true;
+      speakVerse(pausedVerseIndex);
     } else if (isSpeaking) {
-      // Pause
+      // Pause and save current verse
       window.speechSynthesis.cancel();
+      setPausedVerseIndex(currentVerseIndex);
       setIsPaused(true);
+      isSpeakingRef.current = false;
     }
   };
 
@@ -312,7 +313,7 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
               {isSpeaking ? 'Reading...' : 'Read Aloud'}
             </Button>
 
-            {isSpeaking && (
+{(isSpeaking || isPaused) && (
               <>
                 <Button
                   onClick={togglePauseResume}

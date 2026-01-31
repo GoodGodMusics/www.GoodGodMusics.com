@@ -349,7 +349,7 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
                 </li>
                 <li>
-                  <Link to={createPageUrl('About')} className="hover:text-amber-300 transition-colors">
+                  <Link to={createPageUrl('TermsOfService')} className="hover:text-amber-300 transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
