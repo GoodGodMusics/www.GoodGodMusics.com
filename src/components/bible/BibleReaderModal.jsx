@@ -73,15 +73,21 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
 
       setBibleText(response);
       
-      // Parse verses
+      // Parse verses - handle both numbered format and plain text
       const lines = response.split('\n').filter(line => line.trim());
       const verses = [];
       
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        const match = line.match(/^(\d+)\s+(.*)/);
+      for (const line of lines) {
+        // Skip headers or empty lines
+        if (!line.trim()) continue;
+        
+        // Try to match numbered verse format: "1 verse text" or "1. verse text"
+        const match = line.match(/^(\d+)\.?\s+(.+)/);
         if (match && match[2]) {
           verses.push(match[2].trim());
+        } else if (line && !line.includes(':') && lines.indexOf(line) > 0) {
+          // If no number found and it's not the title, treat as verse
+          verses.push(line.trim());
         }
       }
       

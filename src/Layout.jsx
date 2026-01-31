@@ -85,7 +85,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Home', page: 'Home', icon: Home },
     { name: 'The Book', page: 'TheBook', icon: BookOpen },
     { name: 'Bible Timeline', page: 'BibleTimeline', icon: BarChart3 },
-    { name: 'Jesus AI Bot', page: 'BibleStudyAI', icon: Bot },
+    { name: 'AI Jesus Bot', page: 'BibleStudyAI', icon: Bot },
     { name: 'Take a Quiz', page: 'Quiz', icon: FileText },
     { name: 'Music', page: 'Music', icon: Music2 },
     { name: 'Forums', page: 'Forums', icon: MessageSquare },

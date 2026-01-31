@@ -60,9 +60,9 @@ import Music from './pages/Music';
 import Quiz from './pages/Quiz';
 import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
+import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import TermsOfService from './pages/TermsOfService';
 import __Layout from './Layout.jsx';
 
 
@@ -80,9 +80,9 @@ export const PAGES = {
     "Quiz": Quiz,
     "RewardCenter": RewardCenter,
     "Store": Store,
+    "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "TermsOfService": TermsOfService,
 }
 
 export const pagesConfig = {
