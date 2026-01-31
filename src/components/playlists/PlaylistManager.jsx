@@ -53,9 +53,13 @@ export default function PlaylistManager({ userEmail }) {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.UserPlaylist.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updatedPlaylist) => {
       queryClient.invalidateQueries({ queryKey: ['userPlaylists'] });
       setEditingName(null);
+      // Update selected playlist with latest data
+      if (selectedPlaylist?.id === updatedPlaylist.id) {
+        setSelectedPlaylist(updatedPlaylist);
+      }
     }
   });
 
