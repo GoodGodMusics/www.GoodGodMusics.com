@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
         Menu, X, ShoppingCart, BookOpen, Home, Store, 
-        Info, Mail, ChevronDown, Music2, MessageSquare, Bot, BarChart3, FileText
+        Info, Mail, ChevronDown, Music2, MessageSquare, Bot, BarChart3, FileText, TrendingUp
       } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
@@ -90,6 +90,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Music', page: 'Music', icon: Music2 },
     { name: 'Forums', page: 'Forums', icon: MessageSquare },
     { name: 'Store', page: 'Store', icon: Store },
+    { name: 'Advertise', page: 'Advertise', icon: TrendingUp },
     { name: 'About', page: 'About', icon: Info },
     { name: 'Contact', page: 'Contact', icon: Mail },
   ];

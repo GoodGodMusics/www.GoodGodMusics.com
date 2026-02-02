@@ -64,6 +64,7 @@ import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
+import Advertise from './pages/Advertise';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +86,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
+    "Advertise": Advertise,
 }
 
 export const pagesConfig = {
