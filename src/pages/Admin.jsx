@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone, Mail
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone, Mail, TrendingUp, Settings
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
