@@ -15,6 +15,7 @@ import PopupManager from '@/components/admin/PopupManager';
 import AutoImageGenerator from '@/components/admin/AutoImageGenerator';
 import EmailCampaignManager from '@/components/admin/EmailCampaignManager';
 import MusicSubmissionReviewer from '@/components/admin/MusicSubmissionReviewer';
+import PaymentSystemManager from '@/components/admin/PaymentSystemManager';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -242,6 +243,10 @@ export default function Admin() {
             <TabsTrigger value="music" className="flex items-center gap-2">
               <Music2 className="w-4 h-4" />
               Music Submissions
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Payment System
             </TabsTrigger>
           </TabsList>
 
@@ -570,6 +575,11 @@ export default function Admin() {
           {/* Music Submissions Tab */}
           <TabsContent value="music">
             <MusicSubmissionReviewer />
+          </TabsContent>
+
+          {/* Payment System Tab */}
+          <TabsContent value="payments">
+            <PaymentSystemManager />
           </TabsContent>
 
           {/* Settings Tab */}

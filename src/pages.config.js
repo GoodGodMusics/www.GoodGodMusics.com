@@ -60,10 +60,10 @@ import Music from './pages/Music';
 import Quiz from './pages/Quiz';
 import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
+import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import SubmitMusic from './pages/SubmitMusic';
 import __Layout from './Layout.jsx';
 
 
@@ -81,10 +81,10 @@ export const PAGES = {
     "Quiz": Quiz,
     "RewardCenter": RewardCenter,
     "Store": Store,
+    "SubmitMusic": SubmitMusic,
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "SubmitMusic": SubmitMusic,
 }
 
 export const pagesConfig = {

@@ -343,90 +343,87 @@ export default function Checkout() {
                   </motion.div>
                 )}
 
-                {/* Step 3: Payment */}
+                {/* Step 3: Payment - TEMPORARILY DISABLED */}
                 {step === 3 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                   >
                     <h2 className="text-2xl font-serif font-bold text-stone-800 mb-6">
-                      Payment Information
+                      Payment System Temporarily Unavailable
                     </h2>
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg mb-6">
-                      <Lock className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-green-700">Your payment information is secure and encrypted</span>
-                    </div>
+                    
                     <div className="space-y-4">
-                      <div>
-                        <Label>Card Number</Label>
-                        <div className="relative mt-1">
-                          <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
-                          <Input
-                            name="cardNumber"
-                            value={formData.cardNumber}
-                            onChange={handleInputChange}
-                            placeholder="1234 5678 9012 3456"
-                            className="pl-12"
-                          />
+                      <div className="flex items-start gap-3 p-6 bg-amber-50 border-2 border-amber-200 rounded-xl">
+                        <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
+                        <div>
+                          <h3 className="font-bold text-amber-900 mb-2">Payment Processing Currently Down</h3>
+                          <p className="text-sm text-amber-800 mb-3">
+                            We're currently upgrading our payment system to provide a more secure checkout experience.
+                            Our store will be fully operational soon with integrated payment processing through our official distribution partner.
+                          </p>
+                          <p className="text-sm text-amber-800">
+                            <strong>What's coming:</strong> Secure Stripe payment integration, real-time inventory management, 
+                            and seamless order fulfillment through our DistroKid merch platform.
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <Label>Name on Card</Label>
-                        <Input
-                          name="cardName"
-                          value={formData.cardName}
-                          onChange={handleInputChange}
-                          className="mt-1"
-                        />
+
+                      <div className="p-6 bg-blue-50 border border-blue-200 rounded-xl">
+                        <h4 className="font-bold text-blue-900 mb-2">Want to be notified when we launch?</h4>
+                        <p className="text-sm text-blue-800 mb-4">
+                          Leave your email and we'll let you know as soon as our secure store is ready for orders.
+                        </p>
+                        <div className="flex gap-3">
+                          <Input
+                            type="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            name="email"
+                            placeholder="your@email.com"
+                            className="flex-1"
+                          />
+                          <Button className="bg-blue-600 hover:bg-blue-700">
+                            Notify Me
+                          </Button>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Expiry Date</Label>
-                          <Input
-                            name="cardExpiry"
-                            value={formData.cardExpiry}
-                            onChange={handleInputChange}
-                            placeholder="MM/YY"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label>CVC</Label>
-                          <Input
-                            name="cardCvc"
-                            value={formData.cardCvc}
-                            onChange={handleInputChange}
-                            placeholder="123"
-                            className="mt-1"
-                          />
-                        </div>
+
+                      <div className="p-6 bg-stone-50 rounded-xl">
+                        <h4 className="font-semibold text-stone-800 mb-3">In the meantime...</h4>
+                        <ul className="space-y-2 text-sm text-stone-600">
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600" />
+                            Browse our full product catalog
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600" />
+                            Add items to your cart (saved for later)
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600" />
+                            Contact us directly at GoodGodMusics@gmail.com for special orders
+                          </li>
+                        </ul>
                       </div>
                     </div>
+
                     <div className="flex gap-4 mt-8">
                       <Button 
                         variant="outline" 
                         onClick={() => setStep(2)}
                         className="flex-1 py-3 rounded-xl"
-                        disabled={isProcessing}
                       >
                         Back
                       </Button>
-                      <Button 
-                        onClick={handleSubmitOrder}
-                        disabled={isProcessing}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 py-3 rounded-xl"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            Place Order - ${total.toFixed(2)}
-                          </>
-                        )}
-                      </Button>
+                      <Link to={createPageUrl('Store')} className="flex-1">
+                        <Button 
+                          variant="outline"
+                          className="w-full py-3 rounded-xl"
+                        >
+                          Continue Shopping
+                        </Button>
+                      </Link>
                     </div>
                   </motion.div>
                 )}
