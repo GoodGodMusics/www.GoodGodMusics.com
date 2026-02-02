@@ -58,6 +58,7 @@ import Contact from './pages/Contact';
 import Forums from './pages/Forums';
 import Home from './pages/Home';
 import Music from './pages/Music';
+import MusicPromotion from './pages/MusicPromotion';
 import Quiz from './pages/Quiz';
 import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
@@ -65,7 +66,7 @@ import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import MusicPromotion from './pages/MusicPromotion';
+import Marketing from './pages/Marketing';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +82,7 @@ export const PAGES = {
     "Forums": Forums,
     "Home": Home,
     "Music": Music,
+    "MusicPromotion": MusicPromotion,
     "Quiz": Quiz,
     "RewardCenter": RewardCenter,
     "Store": Store,
@@ -88,7 +90,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "MusicPromotion": MusicPromotion,
+    "Marketing": Marketing,
 }
 
 export const pagesConfig = {
