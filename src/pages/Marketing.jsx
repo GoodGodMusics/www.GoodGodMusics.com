@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { TrendingUp, BarChart3, Music, Target, Send, Users } from 'lucide-react';
+import { TrendingUp, BarChart3, Music, Target, Send, Users, Sparkles } from 'lucide-react';
 import CampaignManager from '@/components/music-promotion/CampaignManager';
 import UsageAnalytics from '@/components/analytics/UsageAnalytics';
+import CuratorCRM from '@/components/marketing/CuratorCRM';
+import ContentCurator from '@/components/marketing/ContentCurator';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 
@@ -52,6 +54,14 @@ export default function Marketing() {
               <Music className="w-4 h-4 mr-2" />
               Campaigns
             </TabsTrigger>
+            <TabsTrigger value="curator-crm">
+              <Users className="w-4 h-4 mr-2" />
+              Curator CRM
+            </TabsTrigger>
+            <TabsTrigger value="content-curator">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Content Curator
+            </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
@@ -60,6 +70,14 @@ export default function Marketing() {
 
           <TabsContent value="campaigns">
             <CampaignManager userEmail={user.email} />
+          </TabsContent>
+
+          <TabsContent value="curator-crm">
+            <CuratorCRM />
+          </TabsContent>
+
+          <TabsContent value="content-curator">
+            <ContentCurator />
           </TabsContent>
 
           <TabsContent value="analytics">
