@@ -17,6 +17,7 @@ import EmailCampaignManager from '@/components/admin/EmailCampaignManager';
 import MusicSubmissionReviewer from '@/components/admin/MusicSubmissionReviewer';
 import PaymentSystemManager from '@/components/admin/PaymentSystemManager';
 import AdManager from '@/components/admin/AdManager';
+import SystemSettings from '@/components/admin/SystemSettings';
 
 export default function Admin() {
   const [user, setUser] = useState(null);
@@ -252,6 +253,10 @@ export default function Admin() {
             <TabsTrigger value="ads" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Ad Manager
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              System Settings
             </TabsTrigger>
           </TabsList>
 
@@ -590,6 +595,11 @@ export default function Admin() {
           {/* Ad Manager Tab */}
           <TabsContent value="ads">
             <AdManager />
+          </TabsContent>
+
+          {/* System Settings Tab */}
+          <TabsContent value="system">
+            <SystemSettings />
           </TabsContent>
 
           {/* Settings Tab */}

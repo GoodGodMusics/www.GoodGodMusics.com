@@ -95,13 +95,14 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Contact', page: 'Contact', icon: Mail },
   ];
 
+  if (userRole) {
+    navLinks.push({ name: 'Promotion', page: 'MusicPromotion', icon: TrendingUp });
+
   if (userRole === 'admin') {
     navLinks.push({ name: 'Admin', page: 'Admin', icon: ShoppingCart });
     navLinks.push({ name: 'Analytics', page: 'AdminAnalytics', icon: BarChart3 });
   }
-  
-  if (userRole) {
-    navLinks.push({ name: 'Profile', page: 'UserProfile', icon: Home });
+  navLinks.push({ name: 'Profile', page: 'UserProfile', icon: Home });
   }
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);

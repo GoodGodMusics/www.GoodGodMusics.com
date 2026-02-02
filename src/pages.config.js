@@ -50,6 +50,7 @@
 import About from './pages/About';
 import Admin from './pages/Admin';
 import AdminAnalytics from './pages/AdminAnalytics';
+import Advertise from './pages/Advertise';
 import BibleStudyAI from './pages/BibleStudyAI';
 import BibleTimeline from './pages/BibleTimeline';
 import Checkout from './pages/Checkout';
@@ -64,7 +65,7 @@ import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import Advertise from './pages/Advertise';
+import MusicPromotion from './pages/MusicPromotion';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +73,7 @@ export const PAGES = {
     "About": About,
     "Admin": Admin,
     "AdminAnalytics": AdminAnalytics,
+    "Advertise": Advertise,
     "BibleStudyAI": BibleStudyAI,
     "BibleTimeline": BibleTimeline,
     "Checkout": Checkout,
@@ -86,7 +88,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "Advertise": Advertise,
+    "MusicPromotion": MusicPromotion,
 }
 
 export const pagesConfig = {
