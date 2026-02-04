@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Music2, Edit, Save, X, Search, 
-  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone, Mail, TrendingUp, Settings
+  Loader2, Check, AlertCircle, Link2, MessageSquare, Home, Radio, Megaphone, Mail, TrendingUp, Settings, Heart, DollarSign, Music
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -217,48 +217,57 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="featured" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="featured" className="flex items-center gap-2">
-              <Radio className="w-4 h-4" />
-              Featured Songs ({featuredSongs.length}/6)
+          <TabsList className="mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 h-auto bg-transparent">
+            <TabsTrigger value="featured" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Radio className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Featured Songs</span>
             </TabsTrigger>
-            <TabsTrigger value="images" className="flex items-center gap-2">
-              <Music2 className="w-4 h-4" />
-              Auto Image Generator
+            <TabsTrigger value="custom-songs" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Heart className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Custom Songs</span>
             </TabsTrigger>
-            <TabsTrigger value="popups" className="flex items-center gap-2">
-              <Megaphone className="w-4 h-4" />
-              Promotional Popups
+            <TabsTrigger value="chapters" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Music2 className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Bible Chapters</span>
             </TabsTrigger>
-            <TabsTrigger value="chapters" className="flex items-center gap-2">
-              <Music2 className="w-4 h-4" />
-              Bible Chapters ({chapters.length})
+            <TabsTrigger value="music" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Music className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Submissions</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Home className="w-4 h-4" />
-              Settings
+            <TabsTrigger value="campaigns" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Mail className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Email</span>
             </TabsTrigger>
-            <TabsTrigger value="campaigns" className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              Email Campaigns
+            <TabsTrigger value="ads" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Megaphone className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Ads</span>
             </TabsTrigger>
-            <TabsTrigger value="music" className="flex items-center gap-2">
-              <Music2 className="w-4 h-4" />
-              Music Submissions
+            <TabsTrigger value="popups" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <TrendingUp className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Popups</span>
             </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Payment System
+            <TabsTrigger value="images" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Music2 className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Auto Images</span>
             </TabsTrigger>
-            <TabsTrigger value="ads" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Ad Manager
+            <TabsTrigger value="payments" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <DollarSign className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Payments</span>
             </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              System Settings
+            <TabsTrigger value="settings" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex-col h-auto py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg">
+              <Settings className="w-5 h-5 mb-1" />
+              <span className="text-xs font-medium">System</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Custom Songs Tab */}
+          <TabsContent value="custom-songs">
+            <CustomSongRequestManager />
+          </TabsContent>
 
           {/* Chapters Tab */}
           <TabsContent value="chapters">
