@@ -91,6 +91,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Forums', page: 'Forums', icon: MessageSquare },
     { name: 'Store', page: 'Store', icon: Store },
     { name: 'Advertise', page: 'Advertise', icon: TrendingUp },
+    { name: 'Request Custom Song', page: 'RequestCustomSong', icon: Music2 },
     { name: 'About', page: 'About', icon: Info },
     { name: 'Contact', page: 'Contact', icon: Mail },
   ];

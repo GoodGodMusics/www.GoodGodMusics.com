@@ -57,6 +57,7 @@ import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import Forums from './pages/Forums';
 import Home from './pages/Home';
+import Marketing from './pages/Marketing';
 import Music from './pages/Music';
 import MusicPromotion from './pages/MusicPromotion';
 import Quiz from './pages/Quiz';
@@ -66,7 +67,7 @@ import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import Marketing from './pages/Marketing';
+import RequestCustomSong from './pages/RequestCustomSong';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +82,7 @@ export const PAGES = {
     "Contact": Contact,
     "Forums": Forums,
     "Home": Home,
+    "Marketing": Marketing,
     "Music": Music,
     "MusicPromotion": MusicPromotion,
     "Quiz": Quiz,
@@ -90,7 +92,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "Marketing": Marketing,
+    "RequestCustomSong": RequestCustomSong,
 }
 
 export const pagesConfig = {
