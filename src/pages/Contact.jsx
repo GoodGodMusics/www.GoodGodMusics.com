@@ -33,14 +33,14 @@ export default function Contact() {
     setIsSubmitting(true);
 
     // Send confirmation email to user
-    await base44.integrations.Core.SendEmail({
+    await base44.functions.secureSendEmail({
       to: formData.email,
       subject: `Thank you for contacting Bible Harmony`,
       body: `Dear ${formData.name},\n\nThank you for reaching out to Bible Harmony. We have received your message regarding "${formData.subject}" and will get back to you as soon as possible.\n\nYour message:\n${formData.message}\n\nBlessings,\nThe Bible Harmony Team`
     });
 
     // Send notification to support team
-    await base44.integrations.Core.SendEmail({
+    await base44.functions.secureSendEmail({
       to: 'GoodGodMusics@gmail.com',
       subject: `New Contact Form Submission: ${formData.subject}`,
       body: `New contact form submission received:\n\nFrom: ${formData.name} (${formData.email})\nSubject: ${formData.subject}\n\nMessage:\n${formData.message}`

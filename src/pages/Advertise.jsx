@@ -28,7 +28,7 @@ export default function Advertise() {
     setIsSubmitting(true);
 
     try {
-      await base44.integrations.Core.SendEmail({
+      await base44.functions.secureSendEmail({
         to: 'GoodGodMusics@gmail.com',
         subject: `New Advertising Inquiry from ${formData.name}`,
         body: `

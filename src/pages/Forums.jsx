@@ -114,7 +114,7 @@ export default function Forums() {
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
       // AI Moderation check
-      const moderationResult = await base44.integrations.Core.InvokeLLM({
+      const moderationResult = await base44.functions.secureInvokeLLM({
         prompt: `You are a content moderator for a Christian community forum. Analyze the following post for inappropriate content including hate speech, profanity, spam, or non-faith-related content. 
 
 Title: ${postData.title}
@@ -159,7 +159,7 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
   const createReplyMutation = useMutation({
     mutationFn: async ({ postId, content }) => {
       // AI Moderation for replies
-      const moderationResult = await base44.integrations.Core.InvokeLLM({
+      const moderationResult = await base44.functions.secureInvokeLLM({
         prompt: `You are a content moderator. Check if this reply is appropriate: "${content}"`,
         response_json_schema: {
           type: "object",
@@ -195,7 +195,7 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
       
       for (const sub of postSubscribers) {
         if (sub.user_email !== currentUser.email) {
-          await base44.integrations.Core.SendEmail({
+          await base44.functions.secureSendEmail({
             to: sub.user_email,
             subject: `New reply on: ${post.title}`,
             body: `${currentUser.full_name} replied to the discussion "${post.title}".\n\nReply: ${content}\n\nView the discussion at Bible Harmony Forums.`
