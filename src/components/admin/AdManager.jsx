@@ -114,7 +114,7 @@ export default function AdManager() {
         
         Tone: Uplifting, spiritual, warm. Emphasize connection to scripture through music.`;
 
-        const response = await base44.integrations.Core.InvokeLLM({
+        const response = await base44.functions.secureInvokeLLM({
           prompt,
           response_json_schema: {
             type: 'object',
@@ -132,7 +132,7 @@ export default function AdManager() {
         Artistic style: warm, spiritual, golden hour lighting, ethereal, peaceful. 
         Include subtle cross or dove imagery. Professional quality.`;
 
-        const imageResult = await base44.integrations.Core.GenerateImage({
+        const imageResult = await base44.functions.secureGenerateImage({
           prompt: imagePrompt
         });
 

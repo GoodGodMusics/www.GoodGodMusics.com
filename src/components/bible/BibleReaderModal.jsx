@@ -66,7 +66,7 @@ export default function BibleReaderModal({ isOpen, onClose, chapter, eraChapters
 
     setLoading(true);
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.secureInvokeLLM({
         prompt: `${book} ${chapterNum} NIV. Format: heading, then verses as "1 [text]", "2 [text]", etc.`,
         add_context_from_internet: true
       });

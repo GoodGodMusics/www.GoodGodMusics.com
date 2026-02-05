@@ -67,7 +67,7 @@ export default function BibleTimeline() {
     for (const item of timelineData) {
       if (!newImages[item.era]) {
         try {
-          const result = await base44.integrations.Core.GenerateImage({
+          const result = await base44.functions.secureGenerateImage({
             prompt: item.imagePrompt
           });
           newImages[item.era] = result.url;
