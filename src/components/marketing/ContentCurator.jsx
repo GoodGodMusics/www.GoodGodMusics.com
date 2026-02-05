@@ -57,7 +57,7 @@ export default function ContentCurator() {
       setIsCurating(true);
       
       // Use AI to curate content based on config
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await base44.functions.secureInvokeLLM({
         prompt: `You are a content curator for a Christian music platform called Bible Harmony. 
         
 Configuration: ${config.prompt}
