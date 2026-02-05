@@ -6,32 +6,8 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Download, Loader2, Image as ImageIcon, RefreshCw, Heart } from 'lucide-react';
 
-// Grok API helper
-const callGrokAPI = async (prompt, systemPrompt = '') => {
-  try {
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_GROK_API_KEY}`
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: systemPrompt || 'You are Grok, a helpful AI assistant focused on creating uplifting Christian content.' },
-          { role: 'user', content: prompt }
-        ],
-        model: 'grok-beta',
-        temperature: 0.8
-      })
-    });
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error('Grok API Error:', error);
-    throw error;
-  }
-};
+// Note: Grok API integration removed for security
+// Using Core.InvokeLLM as the primary content generation method
 
 export default function GrokEnhancedContent({ user }) {
   const [generating, setGenerating] = useState(false);
@@ -72,23 +48,22 @@ export default function GrokEnhancedContent({ user }) {
       const viewedBooks = recentChapters.map(c => c.book).filter(Boolean);
       const themes = [...new Set([...quizTopics, ...viewedBooks])].slice(0, 5);
 
-      // Use Grok to generate personalized motivational content
-      const contentPrompt = `Based on a user's recent Bible study activity (topics: ${themes.join(', ')}), create an uplifting, personalized motivational message. 
-      
-Return a JSON object with:
-- "message": A 2-3 sentence personalized encouragement related to their study topics
-- "verse": A relevant Bible verse reference
-- "verse_text": The actual verse text
-- "image_prompt": A detailed prompt for generating a beautiful inspirational image (include colors, mood, religious symbols)
-- "theme": A one-word theme (Faith, Hope, Love, Peace, Joy, Strength, Wisdom, etc.)`;
+      // Generate personalized motivational content using Core.InvokeLLM
+      const contentPrompt = `Based on a user's recent Bible study activity (topics: ${themes.join(', ')}), create an uplifting, personalized motivational message.`;
 
-      const grokResponse = await callGrokAPI(
-        contentPrompt,
-        'You are a Christian spiritual advisor creating personalized encouragement. Always respond with valid JSON only.'
-      );
-
-      // Parse Grok response
-      const content = JSON.parse(grokResponse);
+      const content = await base44.integrations.Core.InvokeLLM({
+        prompt: contentPrompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            verse: { type: 'string' },
+            verse_text: { type: 'string' },
+            image_prompt: { type: 'string' },
+            theme: { type: 'string' }
+          }
+        }
+      });
 
       // Generate image using Core.GenerateImage
       const imageResponse = await base44.integrations.Core.GenerateImage({

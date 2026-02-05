@@ -65,33 +65,8 @@ export default function RewardCenter() {
     }
   });
 
-  // Grok API helper
-  const callGrokAPI = async (prompt) => {
-    try {
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_GROK_API_KEY}`
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are Grok, an AI creating beautiful Christian inspirational content. Always respond with valid JSON only.' },
-            { role: 'user', content: prompt }
-          ],
-          model: 'grok-beta',
-          temperature: 0.9
-        })
-      });
-
-      const data = await response.json();
-      return JSON.parse(data.choices[0].message.content);
-    } catch (error) {
-      console.error('Grok API Error:', error);
-      // Fallback to Core.InvokeLLM
-      return null;
-    }
-  };
+  // Note: Grok API integration removed for security
+  // Using Core.InvokeLLM as the primary content generation method
 
   const generateMeme = async () => {
     if (tokens.length === 0) {
@@ -110,33 +85,20 @@ export default function RewardCenter() {
       const versePrompt = customVerse || 'a powerful Bible verse';
       const themePrompt = customTheme || 'faith and hope';
 
-      // Try Grok first for enhanced content
-      let llmResponse = await callGrokAPI(
-        `Create an inspiring Christian meme about ${themePrompt}. ${customVerse ? `Feature this verse: ${customVerse}` : 'Include a relevant Bible verse.'}
+      // Generate content using Core.InvokeLLM
+      const llmResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: `Create an inspiring Christian meme about ${themePrompt}. ${customVerse ? `Feature this verse: ${customVerse}` : 'Include a relevant Bible verse.'}
         
-Return JSON with:
-- "caption": Uplifting 2-3 sentence message
-- "verse_reference": Bible verse reference
-- "image_prompt": Detailed prompt for generating a beautiful image (describe colors, mood, religious symbols, artistic style)`
-      );
-
-      // Fallback to Core.InvokeLLM if Grok fails
-      if (!llmResponse) {
-        llmResponse = await base44.integrations.Core.InvokeLLM({
-          prompt: `Generate a beautiful, inspiring caption for a Christian meme about ${themePrompt}. 
-          ${customVerse ? `Include or reference this verse: ${customVerse}` : 'Include a relevant Bible verse.'} 
-          The caption should be uplifting, faith-filled, and suitable for sharing.
-          Keep it concise (2-3 sentences max).`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              caption: { type: 'string' },
-              verse_reference: { type: 'string' },
-              image_prompt: { type: 'string' }
-            }
+The caption should be uplifting, faith-filled, and suitable for sharing. Keep it concise (2-3 sentences max).`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            caption: { type: 'string' },
+            verse_reference: { type: 'string' },
+            image_prompt: { type: 'string' }
           }
-        });
-      }
+        }
+      });
 
       const imagePrompt = llmResponse.image_prompt || `Beautiful Christian inspirational image with elegant typography. Theme: ${themePrompt}. 
         Style: Peaceful, uplifting, with soft lighting and calming colors (gold, white, blue, purple tones). 
