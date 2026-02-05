@@ -263,7 +263,7 @@ export default function Quiz() {
       ? `IMPORTANT: Do NOT repeat or create similar questions to these already asked: ${askedQuestions.map(q => q.question).join('; ')}. Generate completely different questions.`
       : '';
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await base44.functions.secureInvokeLLM({
       prompt: `Generate ${count} diverse multiple choice Bible trivia questions covering both Old and New Testament. 
       ${difficultyPrompt}
       ${avoidQuestionsPrompt}
@@ -299,7 +299,7 @@ export default function Quiz() {
   };
 
   const generateBookQuestions = async (book, count) => {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await base44.functions.secureInvokeLLM({
       prompt: `Generate ${count} multiple choice questions specifically about the book of ${book} from the Bible.
       Cover key events, characters, themes, and teachings from this book.
       Each question should have 4 options (A, B, C, D) with only one correct answer.`,
@@ -333,7 +333,7 @@ export default function Quiz() {
   };
 
   const generateChapterQuestions = async (book, chapter, count) => {
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await base44.functions.secureInvokeLLM({
       prompt: `Generate ${count} multiple choice questions about ${book} chapter ${chapter}.
       Focus on specific verses, events, and teachings from this chapter.
       Each question should have 4 options (A, B, C, D) with only one correct answer.`,

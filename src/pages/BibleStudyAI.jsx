@@ -105,7 +105,7 @@ export default function BibleStudyAI() {
 
     try {
       const mode = modes[activeMode];
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await base44.functions.secureInvokeLLM({
         prompt: `${mode.systemPrompt}\n\nUser query: ${userInput}`,
         add_context_from_internet: false
       });

@@ -23,8 +23,8 @@ export default function MotivationalBannerGenerator({ user }) {
   const generateBanner = async () => {
     setGenerating(true);
     try {
-      // Generate content using LLM
-      const response = await base44.integrations.Core.InvokeLLM({
+      // Generate content using secure backend function
+      const response = await base44.functions.secureInvokeLLM({
         prompt: `Create a unique, family-friendly Christian motivational message. 
         
 Return ONLY valid JSON with:
@@ -47,8 +47,8 @@ Return ONLY valid JSON with:
         }
       });
 
-      // Generate image
-      const imageResponse = await base44.integrations.Core.GenerateImage({
+      // Generate image using secure backend function
+      const imageResponse = await base44.functions.secureGenerateImage({
         prompt: `${response.image_prompt}. Beautiful, professional quality, family-friendly inspirational art. ${response.image_style}. Soft lighting, harmonious colors. Peaceful and uplifting atmosphere. NO TEXT OR WORDS in the image.`
       });
 

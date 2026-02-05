@@ -85,8 +85,8 @@ export default function RewardCenter() {
       const versePrompt = customVerse || 'a powerful Bible verse';
       const themePrompt = customTheme || 'faith and hope';
 
-      // Generate content using Core.InvokeLLM
-      const llmResponse = await base44.integrations.Core.InvokeLLM({
+      // Generate content using secure backend function
+      const llmResponse = await base44.functions.secureInvokeLLM({
         prompt: `Create an inspiring Christian meme about ${themePrompt}. ${customVerse ? `Feature this verse: ${customVerse}` : 'Include a relevant Bible verse.'}
         
 The caption should be uplifting, faith-filled, and suitable for sharing. Keep it concise (2-3 sentences max).`,
@@ -97,7 +97,8 @@ The caption should be uplifting, faith-filled, and suitable for sharing. Keep it
             verse_reference: { type: 'string' },
             image_prompt: { type: 'string' }
           }
-        }
+        },
+        use_grok: true
       });
 
       const imagePrompt = llmResponse.image_prompt || `Beautiful Christian inspirational image with elegant typography. Theme: ${themePrompt}. 
@@ -105,7 +106,7 @@ The caption should be uplifting, faith-filled, and suitable for sharing. Keep it
         Include subtle religious symbols like a cross, dove, or light rays. 
         Professional quality, suitable for social media sharing. No text in the image.`;
 
-      const imageResponse = await base44.integrations.Core.GenerateImage({
+      const imageResponse = await base44.functions.secureGenerateImage({
         prompt: imagePrompt
       });
 

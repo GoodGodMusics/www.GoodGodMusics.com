@@ -48,10 +48,10 @@ export default function GrokEnhancedContent({ user }) {
       const viewedBooks = recentChapters.map(c => c.book).filter(Boolean);
       const themes = [...new Set([...quizTopics, ...viewedBooks])].slice(0, 5);
 
-      // Generate personalized motivational content using Core.InvokeLLM
+      // Generate personalized motivational content using secure backend function
       const contentPrompt = `Based on a user's recent Bible study activity (topics: ${themes.join(', ')}), create an uplifting, personalized motivational message.`;
 
-      const content = await base44.integrations.Core.InvokeLLM({
+      const content = await base44.functions.secureInvokeLLM({
         prompt: contentPrompt,
         response_json_schema: {
           type: 'object',
@@ -62,11 +62,12 @@ export default function GrokEnhancedContent({ user }) {
             image_prompt: { type: 'string' },
             theme: { type: 'string' }
           }
-        }
+        },
+        use_grok: true
       });
 
-      // Generate image using Core.GenerateImage
-      const imageResponse = await base44.integrations.Core.GenerateImage({
+      // Generate image using secure backend function
+      const imageResponse = await base44.functions.secureGenerateImage({
         prompt: `${content.image_prompt}. Beautiful, professional quality, peaceful and uplifting Christian inspirational art. Cinematic lighting, soft colors (gold, white, blue, purple). Include subtle cross or light rays. No text in image.`
       });
 
