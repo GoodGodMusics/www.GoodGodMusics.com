@@ -1,0 +1,5 @@
+.cpanel.yml
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/goodmlvt/public_html/
+    - /bin/cp -R * $DEPLOYPATH
