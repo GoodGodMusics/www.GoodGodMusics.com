@@ -77,7 +77,7 @@ export default function EmailCampaignManager() {
 
       // Send emails
       const emailPromises = recipients.map(user => 
-        base44.integrations.Core.SendEmail({
+        base44.functions.secureSendEmail({
           to: user.email,
           subject: campaign.subject,
           body: `
@@ -164,7 +164,7 @@ export default function EmailCampaignManager() {
 
     toast.loading('Uploading image...');
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
+      const result = await base44.functions.secureUploadFile({ file });
       setFormData({ ...formData, image_url: result.file_url });
       toast.dismiss();
       toast.success('Image uploaded!');

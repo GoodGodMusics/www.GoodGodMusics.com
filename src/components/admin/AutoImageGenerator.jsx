@@ -40,7 +40,7 @@ export default function AutoImageGenerator() {
     try {
       const prompt = `Create a beautiful Christian worship music album cover for a song titled "${release.title}" by ${release.artist}. ${release.description || ''} Include religious Christian imagery, divine light, crosses, worship themes, peaceful scenes. Style: professional, spiritual, reverent, high quality`;
       
-      const result = await base44.integrations.Core.GenerateImage({ prompt });
+      const result = await base44.functions.secureGenerateImage({ prompt });
       
       await updateReleaseMutation.mutateAsync({
         id: release.id,
