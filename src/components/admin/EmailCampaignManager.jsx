@@ -75,7 +75,7 @@ export default function EmailCampaignManager() {
         recipients = users.filter(u => activeEmails.has(u.email));
       }
 
-      // Send emails
+      // Send emails using secure backend function
       const emailPromises = recipients.map(user => 
         base44.functions.secureSendEmail({
           to: user.email,
