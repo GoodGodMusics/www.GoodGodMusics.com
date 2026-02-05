@@ -85,7 +85,7 @@ export default function PopupManager() {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.functions.secureUploadFile({ file });
       
       if (popupId) {
         updateMutation.mutate({ 

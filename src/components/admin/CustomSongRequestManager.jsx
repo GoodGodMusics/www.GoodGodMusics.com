@@ -31,7 +31,7 @@ export default function CustomSongRequestManager() {
 
   const uploadSongMutation = useMutation({
     mutationFn: async ({ id, file }) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.functions.secureUploadFile({ file });
       const folderNumber = Math.floor((requests.filter(r => r.status === 'completed').length) / 300) + 1;
       const folderName = folderNumber === 1 ? 'Custom Songs for customers' : `Custom Songs for customers ${folderNumber}`;
       
