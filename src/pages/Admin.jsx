@@ -158,7 +158,7 @@ export default function Admin() {
 
     setUploadingThumbnail(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.functions.secureUploadFile({ file });
       setFeaturedSongData({ ...featuredSongData, thumbnail_url: file_url });
     } catch (error) {
       alert('Failed to upload thumbnail');
