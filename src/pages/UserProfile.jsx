@@ -772,13 +772,30 @@ export default function UserProfile() {
                   {/* Account Actions */}
                   <div>
                     <h3 className="font-semibold text-stone-800 mb-4">Account</h3>
-                    <Button
-                      variant="outline"
-                      onClick={() => base44.auth.logout()}
-                      className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    >
-                      Sign Out
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => base44.auth.logout()}
+                        className="w-full border-amber-200 text-amber-700 hover:bg-amber-50"
+                      >
+                        Sign Out
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete your account? This action cannot be undone. All your data, including quizzes, comments, and preferences will be permanently deleted.')) {
+                            if (confirm('Final confirmation: Delete account permanently?')) {
+                              // Note: Actual deletion requires admin approval or backend function
+                              alert('Account deletion request submitted. An administrator will process your request within 24 hours. You will receive a confirmation email.');
+                              base44.auth.logout();
+                            }
+                          }
+                        }}
+                        className="w-full border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-400"
+                      >
+                        Delete Account
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

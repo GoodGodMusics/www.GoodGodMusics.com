@@ -61,13 +61,13 @@ import Marketing from './pages/Marketing';
 import Music from './pages/Music';
 import MusicPromotion from './pages/MusicPromotion';
 import Quiz from './pages/Quiz';
+import RequestCustomSong from './pages/RequestCustomSong';
 import RewardCenter from './pages/RewardCenter';
 import Store from './pages/Store';
 import SubmitMusic from './pages/SubmitMusic';
 import TermsOfService from './pages/TermsOfService';
 import TheBook from './pages/TheBook';
 import UserProfile from './pages/UserProfile';
-import RequestCustomSong from './pages/RequestCustomSong';
 import __Layout from './Layout.jsx';
 
 
@@ -86,13 +86,13 @@ export const PAGES = {
     "Music": Music,
     "MusicPromotion": MusicPromotion,
     "Quiz": Quiz,
+    "RequestCustomSong": RequestCustomSong,
     "RewardCenter": RewardCenter,
     "Store": Store,
     "SubmitMusic": SubmitMusic,
     "TermsOfService": TermsOfService,
     "TheBook": TheBook,
     "UserProfile": UserProfile,
-    "RequestCustomSong": RequestCustomSong,
 }
 
 export const pagesConfig = {

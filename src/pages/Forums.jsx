@@ -25,6 +25,8 @@ export default function Forums() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
   const queryClient = useQueryClient();
 
   // New post form state
@@ -45,10 +47,51 @@ export default function Forums() {
     getUser();
   }, []);
 
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: posts = [], isLoading, refetch } = useQuery({
     queryKey: ['forumPosts'],
     queryFn: () => base44.entities.ForumPost.list('-created_date', 500)
   });
+
+  // Pull-to-refresh functionality
+  useEffect(() => {
+    let startY = 0;
+    let scrollTop = 0;
+
+    const handleTouchStart = (e) => {
+      startY = e.touches[0].pageY;
+      scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    };
+
+    const handleTouchMove = (e) => {
+      if (scrollTop > 0) return;
+      const currentY = e.touches[0].pageY;
+      const distance = currentY - startY;
+      if (distance > 0 && distance < 150) {
+        setPullDistance(distance);
+      }
+    };
+
+    const handleTouchEnd = async () => {
+      if (pullDistance > 80) {
+        setIsRefreshing(true);
+        await refetch();
+        setTimeout(() => {
+          setIsRefreshing(false);
+        }, 1000);
+      }
+      setPullDistance(0);
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [pullDistance, refetch]);
 
   const { data: replies = [] } = useQuery({
     queryKey: ['forumReplies', selectedPost?.id],
@@ -232,7 +275,26 @@ Respond with a JSON object indicating if the content is appropriate and why.`,
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50/30 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50/30 dark:from-stone-900 dark:via-stone-800 dark:to-amber-900/20 py-12 px-4">
+      {/* Pull-to-refresh indicator */}
+      {pullDistance > 0 && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: pullDistance / 80 }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              isRefreshing ? 'bg-amber-600' : 'bg-stone-300'
+            }`}
+          >
+            <motion.div
+              animate={{ rotate: isRefreshing ? 360 : 0 }}
+              transition={{ duration: 1, repeat: isRefreshing ? Infinity : 0 }}
+            >
+              ↓
+            </motion.div>
+          </motion.div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div

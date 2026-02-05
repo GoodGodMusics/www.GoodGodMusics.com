@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
         Menu, X, ShoppingCart, BookOpen, Home, Store, 
-        Info, Mail, ChevronDown, Music2, MessageSquare, Bot, BarChart3, FileText, TrendingUp
+        Info, Mail, ChevronDown, Music2, MessageSquare, Bot, BarChart3, FileText, TrendingUp, User
       } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/branding/Logo';
@@ -109,7 +109,7 @@ export default function Layout({ children, currentPageName }) {
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-stone-50 to-orange-50/30 dark:from-stone-900 dark:via-stone-800 dark:to-amber-900/20">
       <style>{`
         :root {
           --color-primary: #8B5A2B;
@@ -119,6 +119,12 @@ export default function Layout({ children, currentPageName }) {
           --color-background: #FFFBF5;
           --color-text: #3D3A36;
           --color-text-muted: #6B6762;
+        }
+        
+        .dark {
+          --color-background: #1C1917;
+          --color-text: #F5F5F4;
+          --color-text-muted: #A8A29E;
         }
         
         * {
@@ -149,13 +155,32 @@ export default function Layout({ children, currentPageName }) {
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
         }
+        
+        /* Mobile optimizations */
+        body {
+          overscroll-behavior: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        button, a, [role="button"] {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
+        }
+        
+        /* Safe area support */
+        @supports (padding: env(safe-area-inset-top)) {
+          .safe-top { padding-top: env(safe-area-inset-top); }
+          .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        }
       `}</style>
 
       {/* Navigation */}
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 safe-top ${
           isScrolled 
-            ? 'bg-white/90 backdrop-blur-lg shadow-lg shadow-amber-900/5' 
+            ? 'bg-white/90 dark:bg-stone-900/90 backdrop-blur-lg shadow-lg shadow-amber-900/5' 
             : 'bg-transparent'
         }`}
         initial={{ y: -100 }}
@@ -178,8 +203,8 @@ export default function Layout({ children, currentPageName }) {
                   className={`
                     px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
                     ${currentPageName === link.page 
-                      ? 'bg-amber-100 text-amber-800' 
-                      : 'text-stone-600 hover:text-amber-800 hover:bg-amber-50'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' 
+                      : 'text-stone-600 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-stone-800'
                     }
                   `}
                 >
@@ -234,7 +259,7 @@ export default function Layout({ children, currentPageName }) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white/95 backdrop-blur-lg border-t border-amber-100"
+              className="md:hidden bg-white/95 dark:bg-stone-900/95 backdrop-blur-lg border-t border-amber-100 dark:border-stone-700"
             >
               <div className="px-4 py-6 space-y-2">
                 {navLinks.map((link) => (
@@ -271,9 +296,44 @@ export default function Layout({ children, currentPageName }) {
       />
 
       {/* Main Content */}
-      <main className="pt-20">
-        {children}
+      <main className="pt-20 pb-20 md:pb-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-stone-900/95 backdrop-blur-lg border-t border-stone-200 dark:border-stone-700 z-40 safe-bottom">
+        <div className="flex items-center justify-around py-2">
+          {[
+            { name: 'Home', page: 'Home', icon: Home },
+            { name: 'The Book', page: 'TheBook', icon: BookOpen },
+            { name: 'Music', page: 'Music', icon: Music2 },
+            { name: 'Profile', page: 'UserProfile', icon: User }
+          ].map((link) => (
+            <Link
+              key={link.page}
+              to={createPageUrl(link.page)}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                currentPageName === link.page
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-stone-600 dark:text-stone-400'
+              }`}
+            >
+              <link.icon className="w-6 h-6" />
+              <span className="text-xs font-medium">{link.name}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       {/* Floating Donation Button */}
       <DonationButton variant="floating" />
@@ -282,7 +342,7 @@ export default function Layout({ children, currentPageName }) {
       <MessagingPanel />
 
       {/* Footer */}
-      <footer className="bg-gradient-to-b from-stone-800 to-stone-900 text-white mt-20">
+      <footer className="bg-gradient-to-b from-stone-800 to-stone-900 dark:from-stone-950 dark:to-black text-white mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             {/* Brand */}
